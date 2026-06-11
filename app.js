@@ -185,8 +185,8 @@
       ceilingMode: "pity",
     },
     "アークナイツ：エンドフィールド キャラクター": {
-      singleCost: "600",
-      tenCost: "6000",
+      singleCost: "500",
+      tenCost: "5000",
       ceiling: "99",
       rate5: "2",
       targetRate5: "1",
