@@ -176,7 +176,7 @@
       rate2: "0",
       ceilingMode: "pity",
     },
-    "モンスターストライク（例）": {
+    "モンスターストライク": {
       singleCost: "5",
       tenCost: "50",
       ceiling: "200",
@@ -198,7 +198,7 @@
       rate2: "56",
       ceilingMode: "pity",
     },
-    "学園アイドルマスター Pアイドル（目安）": {
+    "学園アイドルマスター Pアイドル": {
       singleCost: "250",
       tenCost: "2500",
       ceiling: "200",
@@ -210,7 +210,7 @@
       ceilingMode: "points",
       exchangeCost: "200",
     },
-    "学園アイドルマスター サポートカード（目安）": {
+    "学園アイドルマスター サポートカード": {
       singleCost: "250",
       tenCost: "2500",
       ceiling: "200",
@@ -267,7 +267,7 @@
   }
 
   function setActiveTab(tabName) {
-    const validTab = ["calculator", "simulation", "data"].includes(tabName)
+    const validTab = ["calculator", "settings", "simulation", "data"].includes(tabName)
       ? tabName
       : "calculator";
     document.body.dataset.activeTab = validTab;
@@ -278,11 +278,29 @@
       tab.classList.toggle("is-active", active);
       tab.setAttribute("aria-selected", String(active));
     }
+    if (validTab === "settings") {
+      expandFieldset(document.querySelector(".gacha-fieldset"));
+    }
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function expandFieldset(fieldset) {
+    if (!fieldset) {
+      return;
+    }
+    fieldset.classList.remove("is-collapsed");
+    const toggle = fieldset.querySelector(":scope > legend .fieldset-toggle");
+    if (toggle) {
+      toggle.textContent = "閉じる";
+      toggle.setAttribute("aria-expanded", "true");
+    }
   }
 
   function setupCollapsibleFields() {
     for (const fieldset of form.querySelectorAll("fieldset")) {
+      if (fieldset.classList.contains("preset-fieldset")) {
+        continue;
+      }
       const legend = fieldset.querySelector(":scope > legend");
       if (!legend) {
         continue;

@@ -33,6 +33,10 @@
         <span>CALCULATOR</span>
         計算
       </button>
+      <button class="app-tab" type="button" data-tab="settings" aria-selected="false">
+        <span>SETTINGS</span>
+        ガチャ設定
+      </button>
       <button class="app-tab" type="button" data-tab="simulation" aria-selected="false">
         <span>SIMULATION</span>
         シミュレーション
@@ -63,18 +67,6 @@
             </div>
             <span id="template-message" aria-live="polite"></span>
           </div>
-          <div class="preset-template-row">
-            <label>
-              <span>ゲーム別プリセット</span>
-              <select id="preset-template-select">
-                <option value="">ゲームを選択</option>
-              </select>
-            </label>
-            <button id="load-preset-button" type="button">プリセットを適用</button>
-          </div>
-          <p class="preset-note">
-            基礎排出率の目安です。開催時期による変更、ソフト天井、確定枠、ボーナス召喚などは反映されないため、適用後にゲーム内の提供割合をご確認ください。
-          </p>
           <div class="template-save-row">
             <label>
               <span class="sr-only">テンプレート名</span>
@@ -126,7 +118,23 @@
         </section>
 
         <form id="calculator-form" novalidate>
-          <fieldset>
+          <fieldset class="preset-fieldset">
+            <legend>ゲームを選択</legend>
+            <div class="preset-template-row">
+              <label>
+                <span>ゲーム別テンプレート</span>
+                <select id="preset-template-select">
+                  <option value="">ゲームを選択</option>
+                </select>
+              </label>
+              <button id="load-preset-button" type="button">適用</button>
+            </div>
+            <p class="preset-note">
+              まず遊ぶガチャを選ぶと、排出率・天井・交換ポイントなどが入ります。必要に応じて「ガチャ設定」タブで調整できます。
+            </p>
+          </fieldset>
+
+          <fieldset class="resource-fieldset">
             <legend>現在の資源</legend>
             <div class="field-grid">
               <label class="field">
@@ -156,17 +164,17 @@
             </div>
           </fieldset>
 
-          <fieldset>
-            <legend>ガチャ設定</legend>
+          <fieldset class="gacha-fieldset">
+            <legend>天井・交換状況</legend>
             <div class="field-grid">
-              <label class="field field-wide">
+              <label class="field field-wide calc-setting-field">
                 <span>天井・交換方式</span>
                 <select id="ceilingMode" name="ceilingMode">
                   <option value="pity">回数カウント方式</option>
                   <option value="points">交換ポイント方式</option>
                 </select>
               </label>
-              <label class="field">
+              <label class="field advanced-setting-field">
                 <span>1連に必要な石</span>
                 <span class="input-wrap">
                   <input id="singleCost" name="singleCost" type="number" min="1" step="1" value="100" inputmode="numeric">
@@ -174,7 +182,7 @@
                 </span>
                 <span class="error" data-error-for="singleCost"></span>
               </label>
-              <label class="field">
+              <label class="field advanced-setting-field">
                 <span>10連に必要な石</span>
                 <span class="input-wrap">
                   <input id="tenCost" name="tenCost" type="number" min="1" step="1" value="1000" inputmode="numeric">
@@ -182,7 +190,7 @@
                 </span>
                 <span class="error" data-error-for="tenCost"></span>
               </label>
-              <label class="field">
+              <label class="field calc-setting-field">
                 <span>天井回数</span>
                 <span class="input-wrap">
                   <input id="ceiling" name="ceiling" type="number" min="1" step="1" value="200" inputmode="numeric">
@@ -190,7 +198,7 @@
                 </span>
                 <span class="error" data-error-for="ceiling"></span>
               </label>
-              <label class="field">
+              <label class="field calc-setting-field">
                 <span>現在の天井カウント</span>
                 <span class="input-wrap">
                   <input id="currentPity" name="currentPity" type="number" min="0" step="1" value="0" inputmode="numeric">
@@ -198,7 +206,7 @@
                 </span>
                 <span class="error" data-error-for="currentPity"></span>
               </label>
-              <label class="field point-field" hidden>
+              <label class="field point-field calc-setting-field" hidden>
                 <span>交換に必要なポイント</span>
                 <span class="input-wrap">
                   <input id="exchangeCost" name="exchangeCost" type="number" min="1" step="1" value="300" inputmode="numeric">
@@ -206,7 +214,7 @@
                 </span>
                 <span class="error" data-error-for="exchangeCost"></span>
               </label>
-              <label class="field point-field" hidden>
+              <label class="field point-field calc-setting-field" hidden>
                 <span>現在の交換ポイント</span>
                 <span class="input-wrap">
                   <input id="currentPoints" name="currentPoints" type="number" min="0" step="1" value="0" inputmode="numeric">
@@ -214,7 +222,7 @@
                 </span>
                 <span class="error" data-error-for="currentPoints"></span>
               </label>
-              <label class="field">
+              <label class="field advanced-setting-field">
                 <span id="rate5-label">★5 排出率</span>
                 <span class="input-wrap">
                   <input id="rate5" name="rate5" type="number" min="0" max="100" step="0.01" value="1" inputmode="decimal">
@@ -222,7 +230,7 @@
                 </span>
                 <span class="error" data-error-for="rate5"></span>
               </label>
-              <label class="field target-rate-field">
+              <label class="field target-rate-field advanced-setting-field">
                 <span id="target-rate5-label">狙いの★5 排出率</span>
                 <span class="input-wrap">
                   <input id="targetRate5" name="targetRate5" type="number" min="0" max="100" step="0.001" value="0.3" inputmode="decimal">
@@ -231,7 +239,7 @@
                 <span class="error" data-error-for="targetRate5"></span>
                 <small id="target-rate5-help">★5全体のうち、狙いのキャラ・武器が出る確率</small>
               </label>
-              <label class="field">
+              <label class="field advanced-setting-field">
                 <span>ソフト天井開始</span>
                 <span class="input-wrap">
                   <input id="softPityStart" name="softPityStart" type="number" min="0" step="1" value="0" inputmode="numeric">
@@ -239,21 +247,21 @@
                 </span>
                 <span class="error" data-error-for="softPityStart"></span>
               </label>
-              <label class="checkbox-field field-wide">
+              <label class="checkbox-field field-wide advanced-setting-field">
                 <input id="guaranteeAfterMiss" name="guaranteeAfterMiss" type="checkbox">
                 <span>
                   <strong>すり抜け後、次の★5は狙い確定</strong>
                   <small id="guarantee-after-miss-help">★5がその他だった場合、次の★5を狙い扱いにします。</small>
                 </span>
               </label>
-              <label class="checkbox-field field-wide">
+              <label class="checkbox-field field-wide advanced-setting-field">
                 <input id="featuredGuaranteed" name="featuredGuaranteed" type="checkbox">
                 <span>
                   <strong>現在、次の★5は狙い確定</strong>
                   <small>すでに前回すり抜け済みの場合にオンにします。</small>
                 </span>
               </label>
-              <label class="field">
+              <label class="field advanced-setting-field">
                 <span id="rate4-label">★4 排出率</span>
                 <span class="input-wrap">
                   <input id="rate4" name="rate4" type="number" min="0" max="100" step="0.01" value="9" inputmode="decimal">
@@ -261,7 +269,7 @@
                 </span>
                 <span class="error" data-error-for="rate4"></span>
               </label>
-              <label class="field">
+              <label class="field advanced-setting-field">
                 <span id="rate3-label">★3 排出率</span>
                 <span class="input-wrap">
                   <input id="rate3" name="rate3" type="number" min="0" max="100" step="0.01" value="40" inputmode="decimal">
@@ -269,7 +277,7 @@
                 </span>
                 <span class="error" data-error-for="rate3"></span>
               </label>
-              <label class="field">
+              <label class="field advanced-setting-field">
                 <span id="rate2-label">★2 排出率</span>
                 <span class="input-wrap">
                   <input id="rate2" name="rate2" type="number" min="0" max="100" step="0.01" value="50" inputmode="decimal">
@@ -277,11 +285,11 @@
                 </span>
                 <span class="error" data-error-for="rate2"></span>
               </label>
-              <p class="rate-total field-wide">
+              <p class="rate-total field-wide advanced-setting-field">
                 合計排出率 <strong><span id="rate-total">100.00</span>%</strong>
               </p>
-              <p class="rate-total-error field-wide" id="rate-total-error" aria-live="polite"></p>
-              <label class="field field-wide">
+              <p class="rate-total-error field-wide advanced-setting-field" id="rate-total-error" aria-live="polite"></p>
+              <label class="field field-wide calc-setting-field">
                 <span>イベント終了日時</span>
                 <input id="endDate" name="endDate" type="datetime-local">
                 <span class="error" data-error-for="endDate"></span>
@@ -289,7 +297,7 @@
             </div>
           </fieldset>
 
-          <fieldset>
+          <fieldset class="earnings-fieldset">
             <legend>1日ごとの獲得見込み</legend>
             <div class="field-grid">
               <label class="field">
