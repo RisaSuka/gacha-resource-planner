@@ -67,7 +67,29 @@
     { key: "star2", field: "rate2", label: "★2" },
   ];
   const PRESET_TEMPLATES = {
-    "トリッカル（例）": {
+    "トリッカル キャラ（目安）": {
+      singleCost: "100",
+      tenCost: "1000",
+      ceiling: "200",
+      rate5: "3",
+      targetRate5: "1.5",
+      rate4: "17",
+      rate3: "40",
+      rate2: "40",
+      ceilingMode: "pity",
+    },
+    "トリッカル 遺物カード（目安）": {
+      singleCost: "100",
+      tenCost: "1000",
+      ceiling: "200",
+      rate5: "3",
+      targetRate5: "1.5",
+      rate4: "17",
+      rate3: "40",
+      rate2: "40",
+      ceilingMode: "pity",
+    },
+    "トリッカル 光円錐（目安）": {
       singleCost: "100",
       tenCost: "1000",
       ceiling: "200",
@@ -86,6 +108,17 @@
       targetRate5: "0.3",
       rate4: "5.1",
       rate3: "94.3",
+      rate2: "0",
+      ceilingMode: "pity",
+    },
+    "崩壊：スターレイル 光円錐": {
+      singleCost: "160",
+      tenCost: "1600",
+      ceiling: "80",
+      rate5: "0.8",
+      targetRate5: "0.6",
+      rate4: "6.6",
+      rate3: "92.6",
       rate2: "0",
       ceilingMode: "pity",
     },
