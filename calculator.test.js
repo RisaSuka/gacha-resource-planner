@@ -201,3 +201,38 @@ test("統計シミュレーションは平均・最小・最大・分位点を�
   assert.equal(result.star5Probabilities.zero, 0);
   assert.equal(result.star5Probabilities.atLeast1, 1);
 });
+
+test("狙いの★5とその他★5を分けても抽選合計はガチャ回数と一致する", () => {
+  const values = [0.001, 0.005, 0.02, 0.2, 0.8];
+  let index = 0;
+  const result = calculator.simulateRarities(
+    5,
+    { target5: 0.3, star5Other: 0.7, star4: 9, star3: 40, star2: 50 },
+    () => values[index++]
+  );
+
+  assert.deepEqual(result, {
+    target5: 1,
+    star5Other: 1,
+    star4: 1,
+    star3: 1,
+    star2: 1,
+    other: 0,
+  });
+});
+
+test("分割した★5も統計上は合算して★5確率を求める", () => {
+  const values = [0.001, 0.005, 0.2, 0.8];
+  let index = 0;
+  const result = calculator.simulateRarityTrials(
+    4,
+    { target5: 0.3, star5Other: 0.7, star4: 9, star3: 40, star2: 50 },
+    5,
+    () => values[index++ % values.length]
+  );
+
+  assert.equal(result.statistics.target5.average, 1);
+  assert.equal(result.statistics.star5Other.average, 1);
+  assert.equal(result.star5Probabilities.zero, 0);
+  assert.equal(result.star5Probabilities.atLeast1, 1);
+});

@@ -63,6 +63,18 @@
             </div>
             <span id="template-message" aria-live="polite"></span>
           </div>
+          <div class="preset-template-row">
+            <label>
+              <span>ゲーム別プリセット</span>
+              <select id="preset-template-select">
+                <option value="">ゲームを選択</option>
+              </select>
+            </label>
+            <button id="load-preset-button" type="button">プリセットを適用</button>
+          </div>
+          <p class="preset-note">
+            基礎排出率の目安です。開催時期による変更、ソフト天井、確定枠、ボーナス召喚などは反映されないため、適用後にゲーム内の提供割合をご確認ください。
+          </p>
           <div class="template-save-row">
             <label>
               <span class="sr-only">テンプレート名</span>
@@ -209,6 +221,15 @@
                   <span class="unit">%</span>
                 </span>
                 <span class="error" data-error-for="rate5"></span>
+              </label>
+              <label class="field target-rate-field">
+                <span>狙いの★5 排出率</span>
+                <span class="input-wrap">
+                  <input id="targetRate5" name="targetRate5" type="number" min="0" max="100" step="0.001" value="0.3" inputmode="decimal">
+                  <span class="unit">%</span>
+                </span>
+                <span class="error" data-error-for="targetRate5"></span>
+                <small>★5全体のうち、狙いのキャラ・武器が出る確率</small>
               </label>
               <label class="field">
                 <span>★4 排出率</span>

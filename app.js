@@ -20,6 +20,7 @@
     exchangeCost: "300",
     currentPoints: "0",
     rate5: "1",
+    targetRate5: "0.3",
     rate4: "9",
     rate3: "40",
     rate2: "50",
@@ -51,6 +52,7 @@
     "dailyStones",
     "dailyTickets",
     "rate5",
+    "targetRate5",
     "rate4",
     "rate3",
     "rate2",
@@ -64,6 +66,63 @@
     { key: "star3", field: "rate3", label: "★3" },
     { key: "star2", field: "rate2", label: "★2" },
   ];
+  const PRESET_TEMPLATES = {
+    "トリッカル（例）": {
+      singleCost: "100",
+      tenCost: "1000",
+      ceiling: "200",
+      rate5: "3",
+      targetRate5: "1.5",
+      rate4: "17",
+      rate3: "40",
+      rate2: "40",
+      ceilingMode: "pity",
+    },
+    "崩壊：スターレイル キャラクター": {
+      singleCost: "160",
+      tenCost: "1600",
+      ceiling: "90",
+      rate5: "0.6",
+      targetRate5: "0.3",
+      rate4: "5.1",
+      rate3: "94.3",
+      rate2: "0",
+      ceilingMode: "pity",
+    },
+    "鳴潮 キャラクター": {
+      singleCost: "160",
+      tenCost: "1600",
+      ceiling: "80",
+      rate5: "0.8",
+      targetRate5: "0.4",
+      rate4: "6",
+      rate3: "93.2",
+      rate2: "0",
+      ceilingMode: "pity",
+    },
+    "モンスターストライク（例）": {
+      singleCost: "5",
+      tenCost: "50",
+      ceiling: "200",
+      rate5: "12",
+      targetRate5: "0.6",
+      rate4: "88",
+      rate3: "0",
+      rate2: "0",
+      ceilingMode: "pity",
+    },
+    "Fate/Grand Order": {
+      singleCost: "3",
+      tenCost: "30",
+      ceiling: "330",
+      rate5: "1",
+      targetRate5: "0.8",
+      rate4: "3",
+      rate3: "40",
+      rate2: "56",
+      ceilingMode: "pity",
+    },
+  };
 
   const form = document.querySelector("#calculator-form");
   const resetButton = document.querySelector("#reset-button");
@@ -72,6 +131,10 @@
   const trialCountSelect = document.querySelector("#trial-count");
   const saveIndicator = document.querySelector("#save-indicator");
   const templateNameInput = document.querySelector("#template-name");
+  const presetTemplateSelect = document.querySelector(
+    "#preset-template-select"
+  );
+  const loadPresetButton = document.querySelector("#load-preset-button");
   const templateSelect = document.querySelector("#template-select");
   const saveTemplateButton = document.querySelector("#save-template-button");
   const loadTemplateButton = document.querySelector("#load-template-button");
@@ -146,6 +209,7 @@
     for (const name of RATE_FIELDS) {
       state[name] = field(name).value;
     }
+    state.targetRate5 = field("targetRate5").value;
     state.ceilingMode = field("ceilingMode").value;
     state.includeToday = field("includeToday").checked;
     return state;
@@ -163,6 +227,7 @@
     for (const name of RATE_FIELDS) {
       field(name).value = merged[name];
     }
+    field("targetRate5").value = merged.targetRate5;
     field("ceilingMode").value = merged.ceilingMode;
     field("includeToday").checked = Boolean(merged.includeToday);
   }
@@ -366,6 +431,42 @@
     }
   }
 
+  function renderPresetOptions() {
+    for (const name of Object.keys(PRESET_TEMPLATES)) {
+      const option = document.createElement("option");
+      option.value = name;
+      option.textContent = name;
+      presetTemplateSelect.append(option);
+    }
+  }
+
+  function loadSelectedPreset() {
+    const name = presetTemplateSelect.value;
+    const preset = PRESET_TEMPLATES[name];
+    if (!preset) {
+      showTemplateMessage("ゲーム別プリセットを選択してください。", true);
+      return;
+    }
+
+    const resources = {
+      stones: field("stones").value,
+      tickets: field("tickets").value,
+    };
+    applyState({
+      ...readState(),
+      ...preset,
+      currentPity: "0",
+      currentPoints: "0",
+      endDate: "",
+      ...resources,
+    });
+    templateNameInput.value = name;
+    updateModeVisibility();
+    saveState();
+    render();
+    showTemplateMessage("プリセットを適用しました。提供割合をご確認ください。");
+  }
+
   function readTemplateState() {
     const state = readState();
     return Object.fromEntries(
@@ -471,14 +572,34 @@
         rateTotal += rate;
       }
     }
+    const rate5 = Number(field("rate5").value);
+    const targetRate5 = Number(field("targetRate5").value);
+    let targetRateError = "";
+    if (
+      !Number.isFinite(targetRate5) ||
+      targetRate5 < 0 ||
+      targetRate5 > 100
+    ) {
+      targetRateError = "0以上100以下の数値を入力してください。";
+    }
+    if (
+      !targetRateError &&
+      Number.isFinite(rate5) &&
+      targetRate5 > rate5
+    ) {
+      targetRateError = "狙いの★5排出率は、★5全体以下にしてください。";
+    }
+    setError("targetRate5", targetRateError);
+    valid = valid && !targetRateError;
     document.querySelector("#rate-total").textContent = rateTotal.toFixed(2);
     const ratesComplete = Math.abs(rateTotal - 100) < 0.000001;
     const rateTotalError = document.querySelector("#rate-total-error");
     rateTotalError.textContent = ratesComplete
       ? ""
       : "ガチャテストを実行するには、排出率の合計を100%にしてください。";
-    simulateButton.disabled = !ratesComplete;
-    statisticsButton.disabled = !ratesComplete;
+    const simulationReady = ratesComplete && !targetRateError;
+    simulateButton.disabled = !simulationReady;
+    statisticsButton.disabled = !simulationReady;
     if (!ratesComplete) {
       valid = false;
     }
@@ -554,6 +675,28 @@
     );
   }
 
+  function getSimulationRates() {
+    const rates = getRarityRates();
+    const targetRate = Number(field("targetRate5").value) || 0;
+    return {
+      target5: targetRate,
+      star5Other: Math.max(0, rates.star5 - targetRate),
+      star4: rates.star4,
+      star3: rates.star3,
+      star2: rates.star2,
+    };
+  }
+
+  function getSimulationRarities() {
+    return [
+      { key: "target5", label: "狙いの★5", className: "star5 target" },
+      { key: "star5Other", label: "その他★5", className: "star5" },
+      { key: "star4", label: "★4", className: "star4" },
+      { key: "star3", label: "★3", className: "star3" },
+      { key: "star2", label: "★2", className: "star2" },
+    ];
+  }
+
   function renderProbabilityStats(totalDraws) {
     const rates = getRarityRates();
     const rateTotal = Object.values(rates).reduce(
@@ -561,14 +704,32 @@
       0
     );
     document.querySelector("#rate-total").textContent = rateTotal.toFixed(2);
-    document.querySelector("#probability-table").innerHTML = RARITIES.map(
-      (rarity) => {
+    const targetRate = Number(field("targetRate5").value) || 0;
+    const probabilityRows = [
+      {
+        label: "狙いの★5",
+        rate: targetRate,
+        className: "star5 target",
+      },
+      {
+        label: "その他★5",
+        rate: Math.max(0, rates.star5 - targetRate),
+        className: "star5",
+      },
+      ...RARITIES.slice(1).map((rarity) => ({
+        label: rarity.label,
+        rate: rates[rarity.key],
+        className: rarity.key,
+      })),
+    ];
+    document.querySelector("#probability-table").innerHTML =
+      probabilityRows.map((rarity) => {
         const stats = GachaCalculator.probabilityStats(
           totalDraws,
-          rates[rarity.key]
+          rarity.rate
         );
         return `
-          <div class="rarity-row rarity-${rarity.key}">
+          <div class="rarity-row rarity-${rarity.className.replaceAll(" ", " rarity-")}">
             <strong>${rarity.label}</strong>
             <span>期待 ${stats.expectedHits.toFixed(2)}体</span>
             <span>1体以上 ${(stats.atLeastOneProbability * 100).toFixed(1)}%</span>
@@ -725,11 +886,12 @@
       drawsPerTicket
     );
     const totalDraws = stonePlan.draws + drawsFromTickets;
+    const simulationRarities = getSimulationRarities();
     const rarityResults = GachaCalculator.simulateRarities(
       totalDraws,
-      getRarityRates()
+      getSimulationRates()
     );
-    const rarityTotal = RARITIES.reduce(
+    const rarityTotal = simulationRarities.reduce(
       (sum, rarity) => sum + rarityResults[rarity.key],
       0
     );
@@ -738,9 +900,9 @@
     }
 
     document.querySelector("#simulation-rarity-grid").innerHTML =
-      RARITIES.map(
+      simulationRarities.map(
         (rarity) => `
-          <div class="simulation-rarity rarity-${rarity.key}">
+          <div class="simulation-rarity rarity-${rarity.className.replaceAll(" ", " rarity-")}">
             <span>${rarity.label}</span>
             <strong>${numberFormat.format(rarityResults[rarity.key])}体</strong>
           </div>
@@ -787,19 +949,21 @@
         integerValue("drawsPerTicket")
       );
     const trials = Number(trialCountSelect.value);
+    const simulationRarities = getSimulationRarities();
     const result = GachaCalculator.simulateRarityTrials(
       totalDraws,
-      getRarityRates(),
+      getSimulationRates(),
       trials
     );
 
     setText("statistics-draws", result.draws);
     setText("statistics-trials", result.trials);
-    document.querySelector("#statistics-table-body").innerHTML = RARITIES.map(
+    document.querySelector("#statistics-table-body").innerHTML =
+      simulationRarities.map(
       (rarity) => {
         const stats = result.statistics[rarity.key];
         return `
-          <tr class="rarity-${rarity.key}">
+          <tr class="rarity-${rarity.className.replaceAll(" ", " rarity-")}">
             <th>${rarity.label}</th>
             <td>${stats.average.toFixed(2)}</td>
             <td>${numberFormat.format(stats.min)}</td>
@@ -829,6 +993,7 @@
     tab.addEventListener("click", () => setActiveTab(tab.dataset.tab));
   }
   saveTemplateButton.addEventListener("click", saveCurrentTemplate);
+  loadPresetButton.addEventListener("click", loadSelectedPreset);
   loadTemplateButton.addEventListener("click", loadSelectedTemplate);
   deleteTemplateButton.addEventListener("click", deleteSelectedTemplate);
   downloadBackupButton.addEventListener("click", downloadBackup);
@@ -851,6 +1016,7 @@
   });
 
   loadState();
+  renderPresetOptions();
   renderTemplateOptions();
   setupCollapsibleFields();
   setActiveTab(localStorage.getItem(ACTIVE_TAB_KEY) || "calculator");

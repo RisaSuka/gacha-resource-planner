@@ -246,13 +246,34 @@ h2 {
 }
 
 .template-save-row,
-.template-load-row {
+.template-load-row,
+.preset-template-row {
   display: grid;
   gap: 8px;
 }
 
-.template-save-row {
+.template-save-row,
+.preset-template-row {
   grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.preset-template-row {
+  margin-bottom: 8px;
+}
+
+.preset-template-row label {
+  display: grid;
+  gap: 6px;
+}
+
+.preset-template-row label > span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.template-manager > .preset-note {
+  margin: 0 0 18px;
 }
 
 .template-load-row {
@@ -296,6 +317,17 @@ h2 {
   margin: 10px 0 0;
   color: var(--muted);
   font-size: 0.75rem;
+}
+
+.target-rate-field small {
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.rarity-target {
+  background: linear-gradient(135deg, #fff3c8, #fffdf4);
+  box-shadow: inset 3px 0 #d69d18;
 }
 
 .data-actions {
@@ -1090,12 +1122,14 @@ body[data-active-tab="simulation"] .simulation-panel {
   }
 
   .template-save-row,
-  .template-load-row {
+  .template-load-row,
+  .preset-template-row {
     grid-template-columns: 1fr 1fr;
   }
 
   .template-save-row label,
-  .template-load-row label {
+  .template-load-row label,
+  .preset-template-row label {
     grid-column: 1 / -1;
   }
 

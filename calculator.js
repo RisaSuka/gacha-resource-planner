@@ -272,7 +272,13 @@
         ];
       })
     );
-    const star5Values = samples.star5 || [];
+    const star5Values = samples.star5
+      ? samples.star5
+      : samples.target5 && samples.star5Other
+        ? samples.target5.map(
+            (value, index) => value + samples.star5Other[index]
+          )
+        : [];
     const thresholdProbability = (threshold) =>
       star5Values.filter((value) => value >= threshold).length / trials;
 
