@@ -232,6 +232,28 @@
                 <small>★5全体のうち、狙いのキャラ・武器が出る確率</small>
               </label>
               <label class="field">
+                <span>ソフト天井開始</span>
+                <span class="input-wrap">
+                  <input id="softPityStart" name="softPityStart" type="number" min="0" step="1" value="0" inputmode="numeric">
+                  <span class="unit">回</span>
+                </span>
+                <span class="error" data-error-for="softPityStart"></span>
+              </label>
+              <label class="checkbox-field field-wide">
+                <input id="guaranteeAfterMiss" name="guaranteeAfterMiss" type="checkbox">
+                <span>
+                  <strong>すり抜け後、次の★5は狙い確定</strong>
+                  <small>★5がその他だった場合、次の★5を狙い扱いにします。</small>
+                </span>
+              </label>
+              <label class="checkbox-field field-wide">
+                <input id="featuredGuaranteed" name="featuredGuaranteed" type="checkbox">
+                <span>
+                  <strong>現在、次の★5は狙い確定</strong>
+                  <small>すでに前回すり抜け済みの場合にオンにします。</small>
+                </span>
+              </label>
+              <label class="field">
                 <span>★4 排出率</span>
                 <span class="input-wrap">
                   <input id="rate4" name="rate4" type="number" min="0" max="100" step="0.01" value="9" inputmode="decimal">
@@ -474,7 +496,7 @@
               </div>
             </div>
             <p class="statistics-note">
-              現在引ける全回数を1セットとして、選択した回数だけ繰り返します。
+              現在引ける全回数を1セットとして、選択した回数だけ繰り返します。ソフト天井やすり抜け保証がオンの場合は、ガチャテストに反映されます。
             </p>
             <div class="simulation-empty" id="statistics-empty">
               試行結果の平均やばらつきを確認できます。

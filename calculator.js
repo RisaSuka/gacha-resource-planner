@@ -223,6 +223,105 @@
     return results;
   }
 
+  function star5RateForDraw(baseRatePercent, pityCount, softPityStart, hardPity) {
+    const baseRate = probabilityStats(1, baseRatePercent).ratePercent;
+    const currentPity = toNonNegativeInteger(pityCount);
+    const softStart = toNonNegativeInteger(softPityStart);
+    const hard = toNonNegativeInteger(hardPity);
+    const nextDrawCount = currentPity + 1;
+
+    if (hard > 0 && nextDrawCount >= hard) {
+      return 100;
+    }
+    if (softStart < 1 || hard <= softStart || nextDrawCount <= softStart) {
+      return baseRate;
+    }
+
+    const progress = (nextDrawCount - softStart) / (hard - softStart);
+    return Math.min(100, baseRate + (100 - baseRate) * progress);
+  }
+
+  function simulateFeaturedPityRarities(draws, rates, options, random) {
+    const drawCount = toNonNegativeInteger(draws);
+    const randomValue = typeof random === "function" ? random : Math.random;
+    const baseStar5Rate = probabilityStats(
+      1,
+      rates.star5 ?? Number(rates.target5 || 0) + Number(rates.star5Other || 0)
+    ).ratePercent;
+    const targetRate = probabilityStats(1, rates.target5).ratePercent;
+    const normalFeaturedChance =
+      baseStar5Rate > 0 ? Math.min(1, targetRate / baseStar5Rate) : 0;
+    const nonStarRates = {
+      star4: probabilityStats(1, rates.star4).ratePercent,
+      star3: probabilityStats(1, rates.star3).ratePercent,
+      star2: probabilityStats(1, rates.star2).ratePercent,
+    };
+    const baseTotal =
+      baseStar5Rate +
+      nonStarRates.star4 +
+      nonStarRates.star3 +
+      nonStarRates.star2;
+    if (Math.abs(baseTotal - 100) >= 0.000001) {
+      throw new RangeError("排出率の合計は100%にしてください。");
+    }
+
+    const results = {
+      target5: 0,
+      star5Other: 0,
+      star4: 0,
+      star3: 0,
+      star2: 0,
+      other: 0,
+    };
+    let pityCount = toNonNegativeInteger(options?.currentPity);
+    let featuredGuaranteed = Boolean(options?.featuredGuaranteed);
+    const guaranteeAfterMiss = Boolean(options?.guaranteeAfterMiss);
+    const softPityStart = toNonNegativeInteger(options?.softPityStart);
+    const hardPity = toNonNegativeInteger(options?.hardPity);
+
+    for (let drawIndex = 0; drawIndex < drawCount; drawIndex += 1) {
+      const star5Rate =
+        star5RateForDraw(
+          baseStar5Rate,
+          pityCount,
+          softPityStart,
+          hardPity
+        ) / 100;
+      const roll = randomValue();
+
+      if (roll < star5Rate) {
+        const isTarget =
+          featuredGuaranteed || randomValue() < normalFeaturedChance;
+        if (isTarget) {
+          results.target5 += 1;
+          featuredGuaranteed = false;
+        } else {
+          results.star5Other += 1;
+          featuredGuaranteed = guaranteeAfterMiss;
+        }
+        pityCount = 0;
+        continue;
+      }
+
+      const nonStarRoll = randomValue();
+      const nonStarTotal = Math.max(Number.EPSILON, 100 - baseStar5Rate);
+      const star4Threshold = nonStarRates.star4 / nonStarTotal;
+      const star3Threshold =
+        (nonStarRates.star4 + nonStarRates.star3) / nonStarTotal;
+
+      if (nonStarRoll < star4Threshold) {
+        results.star4 += 1;
+      } else if (nonStarRoll < star3Threshold) {
+        results.star3 += 1;
+      } else {
+        results.star2 += 1;
+      }
+      pityCount += 1;
+    }
+
+    return results;
+  }
+
   function percentile(sortedValues, probability) {
     if (sortedValues.length === 0) {
       return 0;
@@ -234,7 +333,7 @@
     return sortedValues[index];
   }
 
-  function simulateRarityTrials(draws, rates, trialCount, random) {
+  function simulateRarityTrials(draws, rates, trialCount, random, options) {
     const trials = Math.max(1, toNonNegativeInteger(trialCount));
     const rarityKeys = Object.keys(rates);
     const samples = Object.fromEntries(
@@ -242,7 +341,14 @@
     );
 
     for (let trialIndex = 0; trialIndex < trials; trialIndex += 1) {
-      const result = simulateRarities(draws, rates, random);
+      const result = options?.featuredPity
+        ? simulateFeaturedPityRarities(
+            draws,
+            rates,
+            options.featuredPity,
+            random
+          )
+        : simulateRarities(draws, rates, random);
       const resultTotal = rarityKeys.reduce(
         (sum, rarity) => sum + result[rarity],
         0
@@ -333,6 +439,8 @@
     probabilityStats,
     simulateHits,
     simulateRarities,
+    star5RateForDraw,
+    simulateFeaturedPityRarities,
     simulateRarityTrials,
     remainingEarningDays,
   };

@@ -21,10 +21,13 @@
     currentPoints: "0",
     rate5: "1",
     targetRate5: "0.3",
+    softPityStart: "0",
     rate4: "9",
     rate3: "40",
     rate2: "50",
     ceilingMode: "pity",
+    guaranteeAfterMiss: false,
+    featuredGuaranteed: false,
     includeToday: false,
   };
   const NUMERIC_FIELDS = [
@@ -39,6 +42,7 @@
     "dailyTickets",
     "exchangeCost",
     "currentPoints",
+    "softPityStart",
   ];
   const RATE_FIELDS = ["rate5", "rate4", "rate3", "rate2"];
   const TEMPLATE_FIELDS = [
@@ -53,11 +57,14 @@
     "dailyTickets",
     "rate5",
     "targetRate5",
+    "softPityStart",
     "rate4",
     "rate3",
     "rate2",
     "endDate",
     "ceilingMode",
+    "guaranteeAfterMiss",
+    "featuredGuaranteed",
     "includeToday",
   ];
   const RARITIES = [
@@ -89,27 +96,18 @@
       rate2: "40",
       ceilingMode: "pity",
     },
-    "トリッカル 光円錐（目安）": {
-      singleCost: "100",
-      tenCost: "1000",
-      ceiling: "200",
-      rate5: "3",
-      targetRate5: "1.5",
-      rate4: "17",
-      rate3: "40",
-      rate2: "40",
-      ceilingMode: "pity",
-    },
     "崩壊：スターレイル キャラクター": {
       singleCost: "160",
       tenCost: "1600",
       ceiling: "90",
       rate5: "0.6",
       targetRate5: "0.3",
+      softPityStart: "74",
       rate4: "5.1",
       rate3: "94.3",
       rate2: "0",
       ceilingMode: "pity",
+      guaranteeAfterMiss: true,
     },
     "崩壊：スターレイル 光円錐": {
       singleCost: "160",
@@ -117,10 +115,12 @@
       ceiling: "80",
       rate5: "0.8",
       targetRate5: "0.6",
+      softPityStart: "66",
       rate4: "6.6",
       rate3: "92.6",
       rate2: "0",
       ceilingMode: "pity",
+      guaranteeAfterMiss: true,
     },
     "鳴潮 キャラクター": {
       singleCost: "160",
@@ -128,6 +128,17 @@
       ceiling: "80",
       rate5: "0.8",
       targetRate5: "0.4",
+      rate4: "6",
+      rate3: "93.2",
+      rate2: "0",
+      ceilingMode: "pity",
+    },
+    "鳴潮 武器": {
+      singleCost: "160",
+      tenCost: "1600",
+      ceiling: "80",
+      rate5: "0.8",
+      targetRate5: "0.8",
       rate4: "6",
       rate3: "93.2",
       rate2: "0",
@@ -154,6 +165,30 @@
       rate3: "40",
       rate2: "56",
       ceilingMode: "pity",
+    },
+    "学園アイドルマスター Pアイドル（目安）": {
+      singleCost: "250",
+      tenCost: "2500",
+      ceiling: "200",
+      rate5: "5",
+      targetRate5: "0.75",
+      rate4: "10",
+      rate3: "85",
+      rate2: "0",
+      ceilingMode: "points",
+      exchangeCost: "200",
+    },
+    "学園アイドルマスター サポートカード（目安）": {
+      singleCost: "250",
+      tenCost: "2500",
+      ceiling: "200",
+      rate5: "5",
+      targetRate5: "0.75",
+      rate4: "10",
+      rate3: "85",
+      rate2: "0",
+      ceilingMode: "points",
+      exchangeCost: "200",
     },
   };
 
@@ -244,6 +279,8 @@
     }
     state.targetRate5 = field("targetRate5").value;
     state.ceilingMode = field("ceilingMode").value;
+    state.guaranteeAfterMiss = field("guaranteeAfterMiss").checked;
+    state.featuredGuaranteed = field("featuredGuaranteed").checked;
     state.includeToday = field("includeToday").checked;
     return state;
   }
@@ -262,6 +299,8 @@
     }
     field("targetRate5").value = merged.targetRate5;
     field("ceilingMode").value = merged.ceilingMode;
+    field("guaranteeAfterMiss").checked = Boolean(merged.guaranteeAfterMiss);
+    field("featuredGuaranteed").checked = Boolean(merged.featuredGuaranteed);
     field("includeToday").checked = Boolean(merged.includeToday);
   }
 
@@ -487,6 +526,9 @@
     };
     applyState({
       ...readState(),
+      softPityStart: "0",
+      guaranteeAfterMiss: false,
+      featuredGuaranteed: false,
       ...preset,
       currentPity: "0",
       currentPoints: "0",
@@ -647,6 +689,16 @@
       valid = false;
     }
 
+    if (
+      integerValue("softPityStart") > 0 &&
+      !document.querySelector('[data-error-for="softPityStart"]').textContent &&
+      !document.querySelector('[data-error-for="ceiling"]').textContent &&
+      integerValue("softPityStart") >= integerValue("ceiling")
+    ) {
+      setError("softPityStart", "天井回数より小さい回数にしてください。");
+      valid = false;
+    }
+
     return valid;
   }
 
@@ -717,6 +769,22 @@
       star4: rates.star4,
       star3: rates.star3,
       star2: rates.star2,
+    };
+  }
+
+  function getFeaturedPityOptions() {
+    const softPityStart = integerValue("softPityStart");
+    const guaranteeAfterMiss = field("guaranteeAfterMiss").checked;
+    const featuredGuaranteed = field("featuredGuaranteed").checked;
+    if (!softPityStart && !guaranteeAfterMiss && !featuredGuaranteed) {
+      return null;
+    }
+    return {
+      currentPity: integerValue("currentPity"),
+      softPityStart,
+      hardPity: integerValue("ceiling"),
+      guaranteeAfterMiss,
+      featuredGuaranteed,
     };
   }
 
@@ -920,10 +988,14 @@
     );
     const totalDraws = stonePlan.draws + drawsFromTickets;
     const simulationRarities = getSimulationRarities();
-    const rarityResults = GachaCalculator.simulateRarities(
-      totalDraws,
-      getSimulationRates()
-    );
+    const featuredPity = getFeaturedPityOptions();
+    const rarityResults = featuredPity
+      ? GachaCalculator.simulateFeaturedPityRarities(
+          totalDraws,
+          getSimulationRates(),
+          featuredPity
+        )
+      : GachaCalculator.simulateRarities(totalDraws, getSimulationRates());
     const rarityTotal = simulationRarities.reduce(
       (sum, rarity) => sum + rarityResults[rarity.key],
       0
@@ -986,7 +1058,9 @@
     const result = GachaCalculator.simulateRarityTrials(
       totalDraws,
       getSimulationRates(),
-      trials
+      trials,
+      Math.random,
+      { featuredPity: getFeaturedPityOptions() }
     );
 
     setText("statistics-draws", result.draws);

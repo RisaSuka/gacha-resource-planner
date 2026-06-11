@@ -236,3 +236,32 @@ test("分割した★5も統計上は合算して★5確率を求める", () => 
   assert.equal(result.star5Probabilities.zero, 0);
   assert.equal(result.star5Probabilities.atLeast1, 1);
 });
+
+test("ソフト天井は天井回数で★5排出率を100%にする", () => {
+  assert.equal(calculator.star5RateForDraw(0.6, 89, 74, 90), 100);
+  assert.equal(calculator.star5RateForDraw(0.6, 0, 74, 90), 0.6);
+  assert.ok(calculator.star5RateForDraw(0.6, 80, 74, 90) > 0.6);
+});
+
+test("すり抜け後の次の★5は狙い確定になる", () => {
+  const values = [
+    0, 0.9,
+    0, 0.9,
+  ];
+  let index = 0;
+  const result = calculator.simulateFeaturedPityRarities(
+    2,
+    { target5: 50, star5Other: 50, star4: 0, star3: 0, star2: 0 },
+    {
+      currentPity: 0,
+      softPityStart: 0,
+      hardPity: 1,
+      guaranteeAfterMiss: true,
+      featuredGuaranteed: false,
+    },
+    () => values[index++]
+  );
+
+  assert.equal(result.star5Other, 1);
+  assert.equal(result.target5, 1);
+});
