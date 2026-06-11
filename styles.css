@@ -51,7 +51,8 @@ select {
   z-index: 20;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  max-width: 860px;
+  width: min(920px, calc(100% - 28px));
+  max-width: 920px;
   margin: 0 auto 24px;
   padding: 6px;
   border: 1px solid rgba(186, 217, 206, 0.9);
@@ -62,6 +63,7 @@ select {
 }
 
 .app-tab {
+  width: 100%;
   min-height: 52px;
   padding: 7px 12px;
   border: 0;
@@ -69,6 +71,8 @@ select {
   color: var(--muted);
   background: transparent;
   font-weight: 800;
+  line-height: 1.25;
+  white-space: nowrap;
   cursor: pointer;
 }
 
@@ -272,7 +276,9 @@ h2 {
 }
 
 .preset-template-row {
+  grid-template-columns: minmax(0, 1fr) minmax(86px, auto);
   margin-bottom: 8px;
+  align-items: end;
 }
 
 .preset-template-row label {
@@ -432,18 +438,28 @@ legend {
 }
 
 .fieldset-toggle {
-  padding: 5px 9px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  color: var(--muted);
+  min-width: 62px;
+  padding: 6px 10px;
+  border: 1px solid #bad9ce;
+  border-radius: 999px;
+  color: var(--green-dark);
   background: #fff;
   font-size: 0.72rem;
   font-weight: 700;
   cursor: pointer;
 }
 
+.fieldset-toggle::before {
+  content: "▾";
+  margin-right: 4px;
+}
+
 .collapsible-fieldset.is-collapsed {
-  margin-top: 18px;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid #dce8e3;
+  border-radius: 14px;
+  background: #fbfdfb;
 }
 
 .collapsible-fieldset.is-collapsed > :not(legend) {
@@ -451,9 +467,20 @@ legend {
 }
 
 .collapsible-fieldset.is-collapsed legend {
+  color: var(--muted);
   margin-bottom: 0;
   border-bottom: 0;
   padding-bottom: 0;
+}
+
+.collapsible-fieldset.is-collapsed .fieldset-toggle {
+  border-color: #bad9ce;
+  color: #fff;
+  background: var(--green);
+}
+
+.collapsible-fieldset.is-collapsed .fieldset-toggle::before {
+  content: "▸";
 }
 
 .field-grid {
@@ -1139,12 +1166,12 @@ body[data-active-tab="simulation"] .simulation-panel {
 
   .app-tab {
     min-height: 54px;
-    padding-inline: 5px;
-    font-size: 0.75rem;
+    padding-inline: 3px;
+    font-size: 0.68rem;
   }
 
   .app-tab span {
-    font-size: 0.52rem;
+    font-size: 0.48rem;
   }
 
   .panel {
@@ -1175,14 +1202,16 @@ body[data-active-tab="simulation"] .simulation-panel {
   }
 
   .template-save-row,
-  .template-load-row,
-  .preset-template-row {
+  .template-load-row {
     grid-template-columns: 1fr 1fr;
   }
 
+  .preset-template-row {
+    grid-template-columns: 1fr;
+  }
+
   .template-save-row label,
-  .template-load-row label,
-  .preset-template-row label {
+  .template-load-row label {
     grid-column: 1 / -1;
   }
 
