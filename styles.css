@@ -152,6 +152,14 @@ h2 {
   background: var(--green-soft);
 }
 
+.data-manager {
+  margin-top: 14px;
+  padding: 18px;
+  border: 1px solid #d9dfdc;
+  border-radius: 16px;
+  background: #f8faf8;
+}
+
 .template-title {
   display: flex;
   margin-bottom: 12px;
@@ -182,6 +190,17 @@ h2 {
 }
 
 #template-message.error-message {
+  color: var(--red);
+}
+
+#data-message {
+  min-height: 1.2em;
+  color: var(--green-dark);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+#data-message.error-message {
   color: var(--red);
 }
 
@@ -233,6 +252,63 @@ h2 {
 }
 
 .template-manager > p {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.data-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.data-actions button,
+.file-import-button {
+  display: flex;
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1px solid #b6cec5;
+  border-radius: 10px;
+  color: var(--green-dark);
+  background: #fff;
+  font-weight: 800;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
+}
+
+.file-import-button input {
+  display: none;
+}
+
+.share-code-field {
+  display: block;
+  margin: 12px 0 8px;
+}
+
+.share-code-field > span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.share-code-field textarea {
+  width: 100%;
+  min-height: 96px;
+  padding: 10px 12px;
+  border: 1px solid #cfd8d3;
+  border-radius: 10px;
+  color: var(--ink);
+  background: #fff;
+  font: 0.75rem/1.5 Consolas, monospace;
+  resize: vertical;
+}
+
+.data-manager > p {
   margin: 10px 0 0;
   color: var(--muted);
   font-size: 0.75rem;

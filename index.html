@@ -68,6 +68,36 @@
           <p>石とチケットの所持数は共通のまま、ガチャ設定だけを保存します。</p>
         </section>
 
+        <section class="data-manager" aria-labelledby="data-heading">
+          <div class="template-title">
+            <div>
+              <span class="template-kicker">DATA TRANSFER</span>
+              <h3 id="data-heading">データ移行・バックアップ</h3>
+            </div>
+            <span id="data-message" aria-live="polite"></span>
+          </div>
+          <div class="data-actions">
+            <button id="download-backup-button" type="button">JSONをダウンロード</button>
+            <label class="file-import-button">
+              JSONを読み込む
+              <input id="backup-file-input" type="file" accept=".json,application/json">
+            </label>
+          </div>
+          <label class="share-code-field">
+            <span>共有文字列</span>
+            <textarea
+              id="share-code"
+              rows="4"
+              placeholder="PCでコピーした共有文字列を、スマホに貼り付けてください。"
+            ></textarea>
+          </label>
+          <div class="data-actions">
+            <button id="copy-share-button" type="button">共有文字列をコピー</button>
+            <button id="import-share-button" type="button">貼り付けた文字列を読込</button>
+          </div>
+          <p>現在の入力値と保存済みテンプレートをまとめて移行します。</p>
+        </section>
+
         <form id="calculator-form" novalidate>
           <fieldset>
             <legend>現在の資源</legend>

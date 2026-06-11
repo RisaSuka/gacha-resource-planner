@@ -3,6 +3,8 @@
 
   const STORAGE_KEY = "gacha-resource-planner:v1";
   const TEMPLATE_STORAGE_KEY = "gacha-resource-planner:templates:v1";
+  const BACKUP_FORMAT = "gacha-resource-planner-backup";
+  const BACKUP_VERSION = 1;
   const DEFAULTS = {
     stones: "0",
     tickets: "0",
@@ -76,9 +78,18 @@
     "#delete-template-button"
   );
   const templateMessage = document.querySelector("#template-message");
+  const downloadBackupButton = document.querySelector(
+    "#download-backup-button"
+  );
+  const backupFileInput = document.querySelector("#backup-file-input");
+  const shareCodeInput = document.querySelector("#share-code");
+  const copyShareButton = document.querySelector("#copy-share-button");
+  const importShareButton = document.querySelector("#import-share-button");
+  const dataMessage = document.querySelector("#data-message");
   const numberFormat = new Intl.NumberFormat("ja-JP");
   let saveIndicatorTimer;
   let templateMessageTimer;
+  let dataMessageTimer;
 
   function field(name) {
     return form.elements.namedItem(name);
@@ -149,6 +160,139 @@
 
   function saveTemplates(templates) {
     localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(templates));
+  }
+
+  function showDataMessage(message, isError) {
+    dataMessage.textContent = message;
+    dataMessage.classList.toggle("error-message", Boolean(isError));
+    clearTimeout(dataMessageTimer);
+    dataMessageTimer = setTimeout(() => {
+      dataMessage.textContent = "";
+      dataMessage.classList.remove("error-message");
+    }, 2600);
+  }
+
+  function createBackup() {
+    return {
+      format: BACKUP_FORMAT,
+      version: BACKUP_VERSION,
+      exportedAt: new Date().toISOString(),
+      state: readState(),
+      templates: loadTemplates(),
+    };
+  }
+
+  function validateBackup(backup) {
+    if (
+      !backup ||
+      typeof backup !== "object" ||
+      backup.format !== BACKUP_FORMAT ||
+      backup.version !== BACKUP_VERSION ||
+      !backup.state ||
+      typeof backup.state !== "object" ||
+      !backup.templates ||
+      typeof backup.templates !== "object" ||
+      Array.isArray(backup.templates)
+    ) {
+      throw new Error("このアプリのバックアップデータではありません。");
+    }
+    return backup;
+  }
+
+  function applyBackup(backup) {
+    const validated = validateBackup(backup);
+    applyState(validated.state);
+    saveTemplates(validated.templates);
+    renderTemplateOptions();
+    updateModeVisibility();
+    saveState();
+    render();
+  }
+
+  function utf8ToBase64(value) {
+    const bytes = new TextEncoder().encode(value);
+    let binary = "";
+    for (const byte of bytes) {
+      binary += String.fromCharCode(byte);
+    }
+    return btoa(binary)
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/g, "");
+  }
+
+  function base64ToUtf8(value) {
+    const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
+    const binary = atob(padded);
+    const bytes = Uint8Array.from(binary, (character) =>
+      character.charCodeAt(0)
+    );
+    return new TextDecoder().decode(bytes);
+  }
+
+  function createShareCode() {
+    return `GRP1.${utf8ToBase64(JSON.stringify(createBackup()))}`;
+  }
+
+  function parseShareCode(value) {
+    const trimmed = value.trim();
+    if (!trimmed.startsWith("GRP1.")) {
+      throw new Error("共有文字列の形式が正しくありません。");
+    }
+    return validateBackup(
+      JSON.parse(base64ToUtf8(trimmed.slice("GRP1.".length)))
+    );
+  }
+
+  function downloadBackup() {
+    const json = JSON.stringify(createBackup(), null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const date = new Date().toISOString().slice(0, 10);
+    link.href = url;
+    link.download = `gacha-resource-planner-${date}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    showDataMessage("JSONをダウンロードしました。");
+  }
+
+  async function copyShareCode() {
+    const code = createShareCode();
+    shareCodeInput.value = code;
+    try {
+      await navigator.clipboard.writeText(code);
+      showDataMessage("共有文字列をコピーしました。");
+    } catch {
+      shareCodeInput.focus();
+      shareCodeInput.select();
+      showDataMessage("文字列を選択しました。端末のコピー操作を使ってください。");
+    }
+  }
+
+  function importShareCode() {
+    try {
+      applyBackup(parseShareCode(shareCodeInput.value));
+      showDataMessage("共有文字列からデータを読み込みました。");
+    } catch (error) {
+      showDataMessage(error.message || "共有文字列を読み込めません。", true);
+    }
+  }
+
+  async function importBackupFile(event) {
+    const file = event.target.files[0];
+    if (!file) {
+      return;
+    }
+    try {
+      applyBackup(JSON.parse(await file.text()));
+      showDataMessage("JSONからデータを読み込みました。");
+    } catch (error) {
+      showDataMessage(error.message || "JSONを読み込めません。", true);
+    } finally {
+      backupFileInput.value = "";
+    }
   }
 
   function showTemplateMessage(message, isError) {
@@ -646,6 +790,10 @@
   saveTemplateButton.addEventListener("click", saveCurrentTemplate);
   loadTemplateButton.addEventListener("click", loadSelectedTemplate);
   deleteTemplateButton.addEventListener("click", deleteSelectedTemplate);
+  downloadBackupButton.addEventListener("click", downloadBackup);
+  backupFileInput.addEventListener("change", importBackupFile);
+  copyShareButton.addEventListener("click", copyShareCode);
+  importShareButton.addEventListener("click", importShareCode);
   templateSelect.addEventListener("change", () => {
     if (templateSelect.value) {
       templateNameInput.value = templateSelect.value;
