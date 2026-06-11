@@ -132,6 +132,7 @@
       rate3: "93.2",
       rate2: "0",
       ceilingMode: "pity",
+      guaranteeAfterMiss: true,
     },
     "鳴潮 武器": {
       singleCost: "160",
