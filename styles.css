@@ -74,6 +74,7 @@ select {
   line-height: 1.25;
   white-space: nowrap;
   cursor: pointer;
+  overflow-wrap: anywhere;
 }
 
 .app-tab span {
@@ -87,6 +88,11 @@ select {
   color: #fff;
   background: var(--green);
   box-shadow: 0 5px 14px rgba(11, 122, 99, 0.2);
+}
+
+.app-tab:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
 }
 
 .eyebrow,
@@ -203,6 +209,10 @@ h2 {
   border-radius: 16px;
   background: var(--green-soft);
   overflow: hidden;
+}
+
+.preset-fieldset > legend {
+  display: none;
 }
 
 .data-manager {
@@ -1175,6 +1185,19 @@ input[aria-invalid="true"] {
   display: none !important;
 }
 
+body[data-has-preset="false"] .resource-fieldset,
+body[data-has-preset="false"] .gacha-fieldset,
+body[data-has-preset="false"] .earnings-fieldset,
+body[data-has-preset="false"] .results-column,
+body[data-has-preset="false"] .calculation-note {
+  display: none;
+}
+
+body[data-has-preset="false"] .layout {
+  grid-template-columns: minmax(0, 720px);
+  justify-content: center;
+}
+
 .template-manager,
 .data-manager,
 .simulation-panel {
@@ -1317,12 +1340,14 @@ body[data-active-tab="simulation"] .simulation-panel {
 
   .app-tab {
     min-height: 54px;
-    padding-inline: 2px;
-    font-size: 0.6rem;
+    padding: 6px 2px;
+    font-size: 0.66rem;
+    line-height: 1.15;
+    white-space: normal;
   }
 
   .app-tab span {
-    font-size: 0.42rem;
+    display: none;
   }
 
   .panel {

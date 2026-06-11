@@ -29,6 +29,7 @@
     ceilingMode: "pity",
     guaranteeAfterMiss: false,
     featuredGuaranteed: false,
+    selectedPreset: "",
     rarityLabel5: "★5",
     rarityLabel4: "★4",
     rarityLabel3: "★3",
@@ -72,6 +73,7 @@
     "ceilingMode",
     "guaranteeAfterMiss",
     "featuredGuaranteed",
+    "selectedPreset",
     "rarityLabel5",
     "rarityLabel4",
     "rarityLabel3",
@@ -255,6 +257,7 @@
   const importShareButton = document.querySelector("#import-share-button");
   const dataMessage = document.querySelector("#data-message");
   const appTabs = document.querySelectorAll(".app-tab");
+  const LOCKED_TABS_WITHOUT_PRESET = ["simulation", "settings", "schedule"];
   const bonusDateInput = document.querySelector("#bonus-date");
   const bonusNameInput = document.querySelector("#bonus-name");
   const bonusStonesInput = document.querySelector("#bonus-stones");
@@ -266,6 +269,7 @@
   let templateMessageTimer;
   let dataMessageTimer;
   let bonusItems = [];
+  let appliedPreset = "";
   let rarityLabels = {
     rarityLabel5: DEFAULTS.rarityLabel5,
     rarityLabel4: DEFAULTS.rarityLabel4,
@@ -275,6 +279,15 @@
 
   function field(name) {
     return form.elements.namedItem(name);
+  }
+
+  function hasSelectedPreset() {
+    return Boolean(appliedPreset);
+  }
+
+  function presetSupportsFeaturedGuarantee() {
+    const preset = PRESET_TEMPLATES[appliedPreset];
+    return Boolean(preset?.guaranteeAfterMiss);
   }
 
   function booleanFieldValue(name) {
@@ -307,15 +320,19 @@
     ].includes(tabName)
       ? tabName
       : "calculator";
-    document.body.dataset.activeTab = validTab;
-    localStorage.setItem(ACTIVE_TAB_KEY, validTab);
+    const nextTab =
+      !hasSelectedPreset() && LOCKED_TABS_WITHOUT_PRESET.includes(validTab)
+        ? "calculator"
+        : validTab;
+    document.body.dataset.activeTab = nextTab;
+    localStorage.setItem(ACTIVE_TAB_KEY, nextTab);
 
     for (const tab of appTabs) {
-      const active = tab.dataset.tab === validTab;
+      const active = tab.dataset.tab === nextTab;
       tab.classList.toggle("is-active", active);
       tab.setAttribute("aria-selected", String(active));
     }
-    if (validTab === "settings") {
+    if (nextTab === "settings") {
       expandFieldset(document.querySelector(".gacha-fieldset"));
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -403,6 +420,7 @@
     state.ceilingMode = field("ceilingMode").value;
     state.guaranteeAfterMiss = booleanFieldValue("guaranteeAfterMiss");
     state.featuredGuaranteed = booleanFieldValue("featuredGuaranteed");
+    state.selectedPreset = appliedPreset;
     state.rarityLabel5 = rarityLabels.rarityLabel5;
     state.rarityLabel4 = rarityLabels.rarityLabel4;
     state.rarityLabel3 = rarityLabels.rarityLabel3;
@@ -429,6 +447,10 @@
     field("ceilingMode").value = merged.ceilingMode;
     setBooleanField("guaranteeAfterMiss", merged.guaranteeAfterMiss);
     setBooleanField("featuredGuaranteed", merged.featuredGuaranteed);
+    appliedPreset = PRESET_TEMPLATES[merged.selectedPreset]
+      ? merged.selectedPreset
+      : "";
+    presetTemplateSelect.value = appliedPreset;
     rarityLabels = {
       rarityLabel5: merged.rarityLabel5 || DEFAULTS.rarityLabel5,
       rarityLabel4: merged.rarityLabel4 || DEFAULTS.rarityLabel4,
@@ -790,6 +812,7 @@
       rarityLabel2: DEFAULTS.rarityLabel2,
       exchangeCost: DEFAULTS.exchangeCost,
       ...preset,
+      selectedPreset: name,
       currentPity: "0",
       currentPoints: "0",
       endDate: "",
@@ -1010,6 +1033,28 @@
   }
 
   function updateModeVisibility() {
+    const selected = hasSelectedPreset();
+    document.body.dataset.hasPreset = selected ? "true" : "false";
+    for (const tab of appTabs) {
+      const locked =
+        !selected && LOCKED_TABS_WITHOUT_PRESET.includes(tab.dataset.tab);
+      tab.disabled = locked;
+      tab.setAttribute("aria-disabled", String(locked));
+    }
+    if (
+      !selected &&
+      LOCKED_TABS_WITHOUT_PRESET.includes(document.body.dataset.activeTab)
+    ) {
+      setActiveTab("calculator");
+    }
+
+    const featuredField = field("featuredGuaranteed").closest(".checkbox-field");
+    const showFeaturedField = selected && presetSupportsFeaturedGuarantee();
+    featuredField.hidden = !showFeaturedField;
+    if (!showFeaturedField) {
+      setBooleanField("featuredGuaranteed", false);
+    }
+
     const pointMode = field("ceilingMode").value === "points";
     const pityFields = [
       field("ceiling").closest(".field"),
@@ -1408,8 +1453,8 @@
     saveIndicator.textContent = "初期値に戻しました";
   });
 
-  loadState();
   renderPresetOptions();
+  loadState();
   renderTemplateOptions();
   setupCollapsibleFields();
   setActiveTab(localStorage.getItem(ACTIVE_TAB_KEY) || "calculator");
