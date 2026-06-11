@@ -309,3 +309,40 @@ test("non-guaranteed featured pity splits star5 expectation evenly", () => {
       0.000001
   );
 });
+
+test("target pity status uses guarantee cycles for desired copies", () => {
+  const result = calculator.targetPityStatus({
+    targetCopies: 2,
+    hardPity: 90,
+    currentPity: 0,
+    tickets: 90,
+    drawsPerTicket: 1,
+    stones: 0,
+    singleCost: 160,
+    tenCost: 1600,
+    guaranteeAfterMiss: true,
+    featuredGuaranteed: true,
+    targetAlwaysOnStar5: false,
+  });
+
+  assert.equal(result.guaranteedDrawsNeeded, 270);
+  assert.equal(result.stoneDrawsNeeded, 180);
+  assert.equal(result.stonesNeeded, 28800);
+});
+
+test("target exchange status subtracts tickets before stones", () => {
+  const result = calculator.targetExchangeStatus({
+    targetCopies: 2,
+    exchangeCost: 200,
+    currentPoints: 50,
+    tickets: 100,
+    drawsPerTicket: 1,
+    stones: 0,
+    singleCost: 100,
+    tenCost: 1000,
+  });
+
+  assert.equal(result.pointsNeeded, 350);
+  assert.equal(result.stoneDrawsNeeded, 250);
+  assert.equal(result.stonesNeeded, 25000);
+});

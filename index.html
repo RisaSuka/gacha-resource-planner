@@ -226,6 +226,14 @@
                 </span>
                 <span class="error" data-error-for="currentPoints"></span>
               </label>
+              <label class="field calc-setting-field">
+                <span>目標の狙い数</span>
+                <span class="input-wrap">
+                  <input id="targetCopies" name="targetCopies" type="number" min="1" step="1" value="1" inputmode="numeric">
+                  <span class="unit">体</span>
+                </span>
+                <span class="error" data-error-for="targetCopies"></span>
+              </label>
               <label class="checkbox-field field-wide calc-setting-field">
                 <input id="featuredGuaranteed" name="featuredGuaranteed" type="checkbox">
                 <span>
@@ -390,6 +398,18 @@
               <dt>不足している石</dt>
               <dd><span id="current-shortage">20,000</span>個</dd>
             </div>
+            <div>
+              <dt>目標までの確定回数</dt>
+              <dd><span id="target-guaranteed-draws">200</span>回</dd>
+            </div>
+            <div>
+              <dt>目標に必要な石</dt>
+              <dd><span id="target-stones-needed">20,000</span>個</dd>
+            </div>
+            <div class="accent-row">
+              <dt>目標まで不足石</dt>
+              <dd><span id="target-stone-shortage">20,000</span>個</dd>
+            </div>
           </dl>
           <dl class="result-list" id="point-results" hidden>
             <div>
@@ -407,6 +427,18 @@
             <div class="accent-row">
               <dt>次の交換まで</dt>
               <dd><span id="points-shortage">300</span>pt</dd>
+            </div>
+            <div>
+              <dt>目標に必要なポイント</dt>
+              <dd><span id="target-points-needed">300</span>pt</dd>
+            </div>
+            <div>
+              <dt>目標に必要な石</dt>
+              <dd><span id="target-point-stones-needed">30,000</span>個</dd>
+            </div>
+            <div class="accent-row">
+              <dt>目標まで不足石</dt>
+              <dd><span id="target-point-shortage">30,000</span>個</dd>
             </div>
           </dl>
 
@@ -512,6 +544,10 @@
               <div id="simulation-points-row" hidden>
                 <dt>テスト後のポイント</dt>
                 <dd><span id="simulation-points">0</span>pt</dd>
+              </div>
+              <div>
+                <dt>狙い目標</dt>
+                <dd><span id="simulation-target-status">未計算</span></dd>
               </div>
             </dl>
           </div>

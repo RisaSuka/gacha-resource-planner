@@ -14,6 +14,7 @@
     tenCost: "1000",
     ceiling: "200",
     currentPity: "0",
+    targetCopies: "1",
     startDate: "",
     endDate: "",
     dailyStones: "0",
@@ -45,6 +46,7 @@
     "tenCost",
     "ceiling",
     "currentPity",
+    "targetCopies",
     "dailyStones",
     "dailyTickets",
     "exchangeCost",
@@ -375,7 +377,8 @@
   }
 
   function setText(id, value) {
-    document.querySelector(`#${id}`).textContent = numberFormat.format(value);
+    document.querySelector(`#${id}`).textContent =
+      typeof value === "number" ? numberFormat.format(value) : value;
   }
 
   function getRarityDefinitions() {
@@ -1032,6 +1035,49 @@
     };
   }
 
+  function getTargetPityInput(stones, tickets) {
+    const rates = getRarityRates();
+    const targetRate = Number(field("targetRate5").value) || 0;
+    return {
+      stones,
+      tickets,
+      drawsPerTicket: integerValue("drawsPerTicket"),
+      singleCost: integerValue("singleCost"),
+      tenCost: integerValue("tenCost"),
+      hardPity: integerValue("ceiling"),
+      currentPity: integerValue("currentPity"),
+      targetCopies: integerValue("targetCopies"),
+      guaranteeAfterMiss: booleanFieldValue("guaranteeAfterMiss"),
+      featuredGuaranteed: booleanFieldValue("featuredGuaranteed"),
+      targetAlwaysOnStar5: rates.star5 > 0 && targetRate >= rates.star5,
+    };
+  }
+
+  function renderTargetPityStatus(stones, tickets) {
+    const targetStatus = GachaCalculator.targetPityStatus(
+      getTargetPityInput(stones, tickets)
+    );
+    if (!targetStatus.guaranteed) {
+      setText("target-guaranteed-draws", "確定不可");
+      setText("target-stones-needed", "-");
+      setText("target-stone-shortage", "-");
+      return;
+    }
+    setText("target-guaranteed-draws", targetStatus.guaranteedDrawsNeeded);
+    setText("target-stones-needed", targetStatus.stonesNeeded);
+    setText("target-stone-shortage", targetStatus.stoneShortage);
+  }
+
+  function renderTargetExchangeStatus(stones, tickets) {
+    const targetStatus = GachaCalculator.targetExchangeStatus({
+      ...getExchangeInput(stones, tickets),
+      targetCopies: integerValue("targetCopies"),
+    });
+    setText("target-points-needed", targetStatus.pointsNeeded);
+    setText("target-point-stones-needed", targetStatus.stonesNeeded);
+    setText("target-point-shortage", targetStatus.stoneShortage);
+  }
+
   function updateModeVisibility() {
     const selected = hasSelectedPreset();
     document.body.dataset.hasPreset = selected ? "true" : "false";
@@ -1204,6 +1250,7 @@
       );
       document.querySelector("#current-status").textContent =
         pointStatus.reachable ? "交換できます" : "交換まで不足";
+      renderTargetExchangeStatus(stones, tickets);
     } else {
       const currentCeiling = GachaCalculator.ceilingStatus(
         getCalculationInput(stones, tickets)
@@ -1216,6 +1263,7 @@
         document.querySelector("#current-status"),
         currentCeiling.reachable
       );
+      renderTargetPityStatus(stones, tickets);
     }
 
     renderProbabilityStats(totalDraws);
@@ -1343,13 +1391,23 @@
     setText("simulation-remaining-stones", stonePlan.remainingStones);
 
     const pointMode = field("ceilingMode").value === "points";
+    const targetCopies = integerValue("targetCopies");
+    const targetHits = rarityResults.target5 || rarityResults.star5 || 0;
+    let targetTotal = targetHits;
     document.querySelector("#simulation-points-row").hidden = !pointMode;
     if (pointMode) {
-      setText(
-        "simulation-points",
-        integerValue("currentPoints") + totalDraws
+      const pointsAfterSimulation = integerValue("currentPoints") + totalDraws;
+      const exchangeableAfterSimulation = Math.floor(
+        pointsAfterSimulation / Math.max(1, integerValue("exchangeCost"))
       );
+      targetTotal += exchangeableAfterSimulation;
+      setText("simulation-points", pointsAfterSimulation);
     }
+    const targetShortage = Math.max(0, targetCopies - targetTotal);
+    document.querySelector("#simulation-target-status").textContent =
+      targetShortage === 0
+        ? `達成（${numberFormat.format(targetTotal)}体）`
+        : `不足 ${numberFormat.format(targetShortage)}体 / 結果 ${numberFormat.format(targetTotal)}体`;
 
     document.querySelector("#simulation-empty").hidden = true;
     document.querySelector("#simulation-content").hidden = false;

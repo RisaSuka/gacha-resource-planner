@@ -136,6 +136,109 @@
     };
   }
 
+  function targetExchangeStatus(options) {
+    const targetCopies = Math.max(1, toNonNegativeInteger(options.targetCopies));
+    const exchangeCost = Math.max(
+      1,
+      toNonNegativeInteger(options.exchangeCost)
+    );
+    const currentPoints = toNonNegativeInteger(options.currentPoints);
+    const drawsFromTickets = ticketDraws(
+      options.tickets,
+      options.drawsPerTicket
+    );
+    const requiredPoints = targetCopies * exchangeCost;
+    const pointsNeeded = Math.max(0, requiredPoints - currentPoints);
+    const stoneDrawsNeeded = Math.max(0, pointsNeeded - drawsFromTickets);
+    const stonesNeeded = minStonesForDraws(
+      stoneDrawsNeeded,
+      options.singleCost,
+      options.tenCost
+    );
+    const stones = toNonNegativeInteger(options.stones);
+
+    return {
+      targetCopies,
+      requiredPoints,
+      pointsNeeded,
+      drawsFromTickets,
+      stoneDrawsNeeded,
+      stonesNeeded,
+      stoneShortage: Math.max(0, stonesNeeded - stones),
+      reachable: stones >= stonesNeeded,
+    };
+  }
+
+  function targetPityStatus(options) {
+    const targetCopies = Math.max(1, toNonNegativeInteger(options.targetCopies));
+    const hardPity = Math.max(1, toNonNegativeInteger(options.hardPity));
+    const currentPity = Math.min(
+      hardPity,
+      toNonNegativeInteger(options.currentPity)
+    );
+    const featuredGuaranteed = Boolean(options.featuredGuaranteed);
+    const guaranteeAfterMiss = Boolean(options.guaranteeAfterMiss);
+    const targetAlwaysOnStar5 = Boolean(options.targetAlwaysOnStar5);
+    const drawsFromTickets = ticketDraws(
+      options.tickets,
+      options.drawsPerTicket
+    );
+    let guaranteedDrawsNeeded = 0;
+
+    if (targetAlwaysOnStar5) {
+      guaranteedDrawsNeeded =
+        Math.max(0, hardPity - currentPity) +
+        Math.max(0, targetCopies - 1) * hardPity;
+    } else if (featuredGuaranteed) {
+      guaranteedDrawsNeeded = Math.max(0, hardPity - currentPity);
+      if (targetCopies > 1) {
+        if (!guaranteeAfterMiss) {
+          guaranteedDrawsNeeded = null;
+        } else {
+          guaranteedDrawsNeeded += (targetCopies - 1) * hardPity * 2;
+        }
+      }
+    } else if (guaranteeAfterMiss) {
+      guaranteedDrawsNeeded =
+        Math.max(0, hardPity - currentPity) +
+        (targetCopies * 2 - 1) * hardPity;
+    } else {
+      guaranteedDrawsNeeded = null;
+    }
+
+    if (guaranteedDrawsNeeded === null) {
+      return {
+        targetCopies,
+        guaranteed: false,
+        guaranteedDrawsNeeded: null,
+        drawsFromTickets,
+        stoneDrawsNeeded: null,
+        stonesNeeded: null,
+        stoneShortage: null,
+        reachable: false,
+      };
+    }
+
+    const stoneDrawsNeeded = Math.max(0, guaranteedDrawsNeeded - drawsFromTickets);
+    const stonesNeeded = minStonesForDraws(
+      stoneDrawsNeeded,
+      options.singleCost,
+      options.tenCost
+    );
+    const stones = toNonNegativeInteger(options.stones);
+
+    return {
+      targetCopies,
+      guaranteed: true,
+      guaranteedDrawsNeeded,
+      drawsFromTickets,
+      stoneDrawsNeeded,
+      stonesNeeded,
+      stoneShortage: Math.max(0, stonesNeeded - stones),
+      reachable: stones >= stonesNeeded,
+    };
+  }
+
   function probabilityStats(draws, ratePercent) {
     const drawCount = toNonNegativeInteger(draws);
     const numericRate = Number(ratePercent);
@@ -575,6 +678,8 @@
     ticketDraws,
     ceilingStatus,
     exchangePointStatus,
+    targetExchangeStatus,
+    targetPityStatus,
     probabilityStats,
     simulateHits,
     simulateRarities,
