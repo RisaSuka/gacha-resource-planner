@@ -14,6 +14,7 @@
     tenCost: "1000",
     ceiling: "200",
     currentPity: "0",
+    startDate: "",
     endDate: "",
     dailyStones: "0",
     dailyTickets: "0",
@@ -32,6 +33,7 @@
     rarityLabel4: "★4",
     rarityLabel3: "★3",
     rarityLabel2: "★2",
+    bonusItems: [],
     includeToday: false,
   };
   const NUMERIC_FIELDS = [
@@ -65,6 +67,7 @@
     "rate4",
     "rate3",
     "rate2",
+    "startDate",
     "endDate",
     "ceilingMode",
     "guaranteeAfterMiss",
@@ -73,6 +76,7 @@
     "rarityLabel4",
     "rarityLabel3",
     "rarityLabel2",
+    "bonusItems",
     "includeToday",
   ];
   const RARITIES = [
@@ -251,10 +255,17 @@
   const importShareButton = document.querySelector("#import-share-button");
   const dataMessage = document.querySelector("#data-message");
   const appTabs = document.querySelectorAll(".app-tab");
+  const bonusDateInput = document.querySelector("#bonus-date");
+  const bonusNameInput = document.querySelector("#bonus-name");
+  const bonusStonesInput = document.querySelector("#bonus-stones");
+  const bonusTicketsInput = document.querySelector("#bonus-tickets");
+  const addBonusButton = document.querySelector("#add-bonus-button");
+  const bonusList = document.querySelector("#bonus-list");
   const numberFormat = new Intl.NumberFormat("ja-JP");
   let saveIndicatorTimer;
   let templateMessageTimer;
   let dataMessageTimer;
+  let bonusItems = [];
   let rarityLabels = {
     rarityLabel5: DEFAULTS.rarityLabel5,
     rarityLabel4: DEFAULTS.rarityLabel4,
@@ -267,7 +278,13 @@
   }
 
   function setActiveTab(tabName) {
-    const validTab = ["calculator", "settings", "simulation", "data"].includes(tabName)
+    const validTab = [
+      "calculator",
+      "simulation",
+      "settings",
+      "schedule",
+      "data",
+    ].includes(tabName)
       ? tabName
       : "calculator";
     document.body.dataset.activeTab = validTab;
@@ -341,6 +358,7 @@
       "rate2-label": `${rarityLabels.rarityLabel2} 排出率`,
       "target-rate5-help": `${topLabel}全体のうち、狙いのキャラ・武器が出る確率`,
       "guarantee-after-miss-help": `${topLabel}がその他だった場合、次の${topLabel}を狙い扱いにします。`,
+      "featured-guaranteed-label": `現在、次の${topLabel}は狙い確定`,
       "statistics-featured-label": topLabel,
     };
 
@@ -357,6 +375,7 @@
     for (const name of NUMERIC_FIELDS) {
       state[name] = field(name).value;
     }
+    state.startDate = field("startDate").value;
     state.endDate = field("endDate").value;
     for (const name of RATE_FIELDS) {
       state[name] = field(name).value;
@@ -369,6 +388,7 @@
     state.rarityLabel4 = rarityLabels.rarityLabel4;
     state.rarityLabel3 = rarityLabels.rarityLabel3;
     state.rarityLabel2 = rarityLabels.rarityLabel2;
+    state.bonusItems = bonusItems;
     state.includeToday = field("includeToday").checked;
     return state;
   }
@@ -378,6 +398,7 @@
     for (const name of NUMERIC_FIELDS) {
       field(name).value = merged[name];
     }
+    field("startDate").value = merged.startDate;
     field("endDate").value = merged.endDate;
     if (state && state.dropRate !== undefined && state.rate5 === undefined) {
       merged.rate5 = state.dropRate;
@@ -396,6 +417,16 @@
       rarityLabel2: merged.rarityLabel2 || DEFAULTS.rarityLabel2,
     };
     updateRarityLabelText();
+    bonusItems = Array.isArray(merged.bonusItems)
+      ? merged.bonusItems.map((item) => ({
+          id: item.id || String(Date.now() + Math.random()),
+          date: item.date || "",
+          name: item.name || "",
+          stones: GachaCalculator.toNonNegativeInteger(item.stones),
+          tickets: GachaCalculator.toNonNegativeInteger(item.tickets),
+        }))
+      : [];
+    renderBonusItems();
     field("includeToday").checked = Boolean(merged.includeToday);
   }
 
@@ -430,6 +461,116 @@
 
   function saveTemplates(templates) {
     localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(templates));
+  }
+
+  function formatBonusDate(value) {
+    return value || "日付なし";
+  }
+
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, (character) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    })[character]);
+  }
+
+  function renderBonusItems() {
+    if (bonusItems.length === 0) {
+      bonusList.innerHTML = '<p class="bonus-empty">臨時獲得はまだありません。</p>';
+      return;
+    }
+
+    bonusList.innerHTML = bonusItems
+      .map(
+        (item) => `
+          <div class="bonus-item" data-id="${item.id}">
+            <div>
+              <strong>${escapeHtml(item.name || "臨時獲得")}</strong>
+              <span>${escapeHtml(formatBonusDate(item.date))} / 石 ${numberFormat.format(item.stones)}個 / チケット ${numberFormat.format(item.tickets)}枚</span>
+            </div>
+            <button class="bonus-delete-button" type="button" data-delete-bonus="${item.id}">削除</button>
+          </div>
+        `
+      )
+      .join("");
+  }
+
+  function addBonusItem() {
+    const stones = GachaCalculator.toNonNegativeInteger(bonusStonesInput.value);
+    const tickets = GachaCalculator.toNonNegativeInteger(
+      bonusTicketsInput.value
+    );
+    if (stones === 0 && tickets === 0) {
+      showDataMessage("臨時獲得の石かチケットを入力してください。", true);
+      return;
+    }
+
+    bonusItems.push({
+      id: String(Date.now()),
+      date: bonusDateInput.value,
+      name: bonusNameInput.value.trim(),
+      stones,
+      tickets,
+    });
+    bonusNameInput.value = "";
+    bonusStonesInput.value = "0";
+    bonusTicketsInput.value = "0";
+    renderBonusItems();
+    saveState();
+    render();
+  }
+
+  function deleteBonusItem(id) {
+    bonusItems = bonusItems.filter((item) => item.id !== id);
+    renderBonusItems();
+    saveState();
+    render();
+  }
+
+  function bonusDateInRange(item, startDateValue, endDateValue) {
+    if (!item.date) {
+      return true;
+    }
+    const itemDate = new Date(`${item.date}T00:00`);
+    if (Number.isNaN(itemDate.getTime())) {
+      return true;
+    }
+    if (startDateValue) {
+      const startDate = new Date(startDateValue);
+      if (
+        !Number.isNaN(startDate.getTime()) &&
+        itemDate.getTime() < startDate.setHours(0, 0, 0, 0)
+      ) {
+        return false;
+      }
+    }
+    if (endDateValue) {
+      const endDate = new Date(endDateValue);
+      if (
+        !Number.isNaN(endDate.getTime()) &&
+        itemDate.getTime() > endDate.setHours(23, 59, 59, 999)
+      ) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function bonusTotalsForForecast() {
+    return bonusItems
+      .filter((item) =>
+        bonusDateInRange(item, field("startDate").value, field("endDate").value)
+      )
+      .reduce(
+        (totals, item) => ({
+          stones: totals.stones + item.stones,
+          tickets: totals.tickets + item.tickets,
+        }),
+        { stones: 0, tickets: 0 }
+      );
   }
 
   function showDataMessage(message, isError) {
@@ -800,6 +941,22 @@
       valid = false;
     }
 
+    const startDateValue = field("startDate").value;
+    const endDateValue = field("endDate").value;
+    setError("startDate", "");
+    if (startDateValue && endDateValue) {
+      const startDate = new Date(startDateValue);
+      const endDate = new Date(endDateValue);
+      if (
+        !Number.isNaN(startDate.getTime()) &&
+        !Number.isNaN(endDate.getTime()) &&
+        startDate.getTime() > endDate.getTime()
+      ) {
+        setError("startDate", "終了日時より前にしてください。");
+        valid = false;
+      }
+    }
+
     return valid;
   }
 
@@ -1013,8 +1170,10 @@
       endDate,
       field("includeToday").checked
     );
-    const addedStones = integerValue("dailyStones") * days;
-    const addedTickets = integerValue("dailyTickets") * days;
+    const bonusTotals = bonusTotalsForForecast();
+    const addedStones = integerValue("dailyStones") * days + bonusTotals.stones;
+    const addedTickets =
+      integerValue("dailyTickets") * days + bonusTotals.tickets;
     const forecastStones = stones + addedStones;
     const forecastTickets = tickets + addedTickets;
     const forecastStoneDraws = GachaCalculator.maxDrawsFromStones(
@@ -1201,6 +1360,13 @@
   backupFileInput.addEventListener("change", importBackupFile);
   copyShareButton.addEventListener("click", copyShareCode);
   importShareButton.addEventListener("click", importShareCode);
+  addBonusButton.addEventListener("click", addBonusItem);
+  bonusList.addEventListener("click", (event) => {
+    const deleteButton = event.target.closest("[data-delete-bonus]");
+    if (deleteButton) {
+      deleteBonusItem(deleteButton.dataset.deleteBonus);
+    }
+  });
   templateSelect.addEventListener("change", () => {
     if (templateSelect.value) {
       templateNameInput.value = templateSelect.value;

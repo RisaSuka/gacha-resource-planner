@@ -33,13 +33,17 @@
         <span>CALCULATOR</span>
         計算
       </button>
+      <button class="app-tab" type="button" data-tab="simulation" aria-selected="false">
+        <span>SIMULATION</span>
+        シミュレーション
+      </button>
       <button class="app-tab" type="button" data-tab="settings" aria-selected="false">
         <span>SETTINGS</span>
         ガチャ設定
       </button>
-      <button class="app-tab" type="button" data-tab="simulation" aria-selected="false">
-        <span>SIMULATION</span>
-        シミュレーション
+      <button class="app-tab" type="button" data-tab="schedule" aria-selected="false">
+        <span>SCHEDULE</span>
+        スケジュール
       </button>
       <button class="app-tab" type="button" data-tab="data" aria-selected="false">
         <span>DATA</span>
@@ -165,9 +169,9 @@
           </fieldset>
 
           <fieldset class="gacha-fieldset">
-            <legend>天井・交換状況</legend>
+            <legend>現在のガチャ状況</legend>
             <div class="field-grid">
-              <label class="field field-wide calc-setting-field">
+              <label class="field field-wide advanced-setting-field">
                 <span>天井・交換方式</span>
                 <select id="ceilingMode" name="ceilingMode">
                   <option value="pity">回数カウント方式</option>
@@ -190,7 +194,7 @@
                 </span>
                 <span class="error" data-error-for="tenCost"></span>
               </label>
-              <label class="field calc-setting-field">
+              <label class="field advanced-setting-field">
                 <span>天井回数</span>
                 <span class="input-wrap">
                   <input id="ceiling" name="ceiling" type="number" min="1" step="1" value="200" inputmode="numeric">
@@ -206,7 +210,7 @@
                 </span>
                 <span class="error" data-error-for="currentPity"></span>
               </label>
-              <label class="field point-field calc-setting-field" hidden>
+              <label class="field point-field advanced-setting-field" hidden>
                 <span>交換に必要なポイント</span>
                 <span class="input-wrap">
                   <input id="exchangeCost" name="exchangeCost" type="number" min="1" step="1" value="300" inputmode="numeric">
@@ -221,6 +225,13 @@
                   <span class="unit">pt</span>
                 </span>
                 <span class="error" data-error-for="currentPoints"></span>
+              </label>
+              <label class="checkbox-field field-wide calc-setting-field">
+                <input id="featuredGuaranteed" name="featuredGuaranteed" type="checkbox">
+                <span>
+                  <strong id="featured-guaranteed-label">現在、次の★5は狙い確定</strong>
+                  <small>すでに前回すり抜け済みの場合にオンにします。</small>
+                </span>
               </label>
               <label class="field advanced-setting-field">
                 <span id="rate5-label">★5 排出率</span>
@@ -254,13 +265,6 @@
                   <small id="guarantee-after-miss-help">★5がその他だった場合、次の★5を狙い扱いにします。</small>
                 </span>
               </label>
-              <label class="checkbox-field field-wide advanced-setting-field">
-                <input id="featuredGuaranteed" name="featuredGuaranteed" type="checkbox">
-                <span>
-                  <strong>現在、次の★5は狙い確定</strong>
-                  <small>すでに前回すり抜け済みの場合にオンにします。</small>
-                </span>
-              </label>
               <label class="field advanced-setting-field">
                 <span id="rate4-label">★4 排出率</span>
                 <span class="input-wrap">
@@ -289,17 +293,22 @@
                 合計排出率 <strong><span id="rate-total">100.00</span>%</strong>
               </p>
               <p class="rate-total-error field-wide advanced-setting-field" id="rate-total-error" aria-live="polite"></p>
-              <label class="field field-wide calc-setting-field">
-                <span>イベント終了日時</span>
-                <input id="endDate" name="endDate" type="datetime-local">
-                <span class="error" data-error-for="endDate"></span>
-              </label>
             </div>
           </fieldset>
 
           <fieldset class="earnings-fieldset">
-            <legend>1日ごとの獲得見込み</legend>
+            <legend>スケジュール管理</legend>
             <div class="field-grid">
+              <label class="field field-wide schedule-field">
+                <span>イベント開始日時</span>
+                <input id="startDate" name="startDate" type="datetime-local">
+                <span class="error" data-error-for="startDate"></span>
+              </label>
+              <label class="field field-wide schedule-field">
+                <span>イベント終了日時</span>
+                <input id="endDate" name="endDate" type="datetime-local">
+                <span class="error" data-error-for="endDate"></span>
+              </label>
               <label class="field">
                 <span>1日あたりの石</span>
                 <span class="input-wrap">
@@ -324,6 +333,32 @@
                 <small>オフの場合は、明日から終了日までを計算します。</small>
               </span>
             </label>
+            <div class="bonus-manager schedule-field">
+              <div class="bonus-heading">
+                <span>臨時獲得リスト</span>
+                <small>終了時点の予測に加算します。</small>
+              </div>
+              <div class="bonus-input-row">
+                <label>
+                  <span>日付</span>
+                  <input id="bonus-date" type="date">
+                </label>
+                <label>
+                  <span>内容</span>
+                  <input id="bonus-name" type="text" maxlength="40" placeholder="ログボ・配布など">
+                </label>
+                <label>
+                  <span>石</span>
+                  <input id="bonus-stones" type="number" min="0" step="1" value="0" inputmode="numeric">
+                </label>
+                <label>
+                  <span>チケット</span>
+                  <input id="bonus-tickets" type="number" min="0" step="1" value="0" inputmode="numeric">
+                </label>
+                <button id="add-bonus-button" type="button">追加</button>
+              </div>
+              <div class="bonus-list" id="bonus-list" aria-live="polite"></div>
+            </div>
           </fieldset>
         </form>
       </section>
