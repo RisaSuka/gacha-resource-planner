@@ -411,7 +411,10 @@
       return null;
     }
 
-    const endDate = new Date(endDateValue);
+    const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(String(endDateValue));
+    const endDate = new Date(
+      dateOnly ? `${endDateValue}T23:59:59` : endDateValue
+    );
     const now = nowValue ? new Date(nowValue) : new Date();
 
     if (

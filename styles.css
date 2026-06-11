@@ -374,9 +374,15 @@ h2 {
 
 .bonus-input-row {
   display: grid;
-  grid-template-columns: 1.05fr 1.4fr 0.75fr 0.75fr auto;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
   align-items: end;
+}
+
+.bonus-input-row label:nth-child(1),
+.bonus-input-row label:nth-child(2),
+.bonus-input-row button {
+  grid-column: span 2;
 }
 
 .bonus-input-row label {
@@ -611,7 +617,7 @@ legend {
 }
 
 input[type="number"],
-input[type="datetime-local"],
+input[type="date"],
 select {
   width: 100%;
   min-height: 48px;
@@ -626,7 +632,7 @@ select {
   transition: border-color 150ms, box-shadow 150ms;
 }
 
-input[type="datetime-local"] {
+input[type="date"] {
   padding-right: 13px;
 }
 
@@ -686,6 +692,7 @@ input[aria-invalid="true"] {
 }
 
 .checkbox-field {
+  position: relative;
   display: flex;
   margin-top: 18px;
   padding: 15px;
@@ -698,10 +705,12 @@ input[aria-invalid="true"] {
 }
 
 .checkbox-field input {
+  flex: 0 0 auto;
   width: 20px;
   height: 20px;
   margin: 2px 0 0;
   accent-color: var(--green);
+  cursor: pointer;
 }
 
 .checkbox-field strong,
@@ -1387,6 +1396,12 @@ body[data-active-tab="simulation"] .simulation-panel {
 
   .bonus-input-row {
     grid-template-columns: 1fr;
+  }
+
+  .bonus-input-row label:nth-child(1),
+  .bonus-input-row label:nth-child(2),
+  .bonus-input-row button {
+    grid-column: auto;
   }
 
   .bonus-item {

@@ -258,13 +258,7 @@
                 </span>
                 <span class="error" data-error-for="softPityStart"></span>
               </label>
-              <label class="checkbox-field field-wide advanced-setting-field">
-                <input id="guaranteeAfterMiss" name="guaranteeAfterMiss" type="checkbox">
-                <span>
-                  <strong>すり抜け後、次の★5は狙い確定</strong>
-                  <small id="guarantee-after-miss-help">★5がその他だった場合、次の★5を狙い扱いにします。</small>
-                </span>
-              </label>
+              <input id="guaranteeAfterMiss" name="guaranteeAfterMiss" type="hidden" value="false">
               <label class="field advanced-setting-field">
                 <span id="rate4-label">★4 排出率</span>
                 <span class="input-wrap">
@@ -300,13 +294,13 @@
             <legend>スケジュール管理</legend>
             <div class="field-grid">
               <label class="field field-wide schedule-field">
-                <span>イベント開始日時</span>
-                <input id="startDate" name="startDate" type="datetime-local">
+                <span>イベント開始日</span>
+                <input id="startDate" name="startDate" type="date">
                 <span class="error" data-error-for="startDate"></span>
               </label>
               <label class="field field-wide schedule-field">
-                <span>イベント終了日時</span>
-                <input id="endDate" name="endDate" type="datetime-local">
+                <span>イベント終了日</span>
+                <input id="endDate" name="endDate" type="date">
                 <span class="error" data-error-for="endDate"></span>
               </label>
               <label class="field">
@@ -428,11 +422,11 @@
               <p class="step-label">FORECAST</p>
               <h2 id="forecast-heading">終了時点の予測</h2>
             </div>
-            <span class="status-badge neutral" id="forecast-status">終了日時を入力</span>
+            <span class="status-badge neutral" id="forecast-status">終了日を入力</span>
           </div>
 
           <div id="forecast-empty" class="empty-state">
-            イベント終了日時を入力すると、終了時点の資源を予測します。
+            イベント終了日を入力すると、終了時点の資源を予測します。
           </div>
 
           <div id="forecast-content" hidden>

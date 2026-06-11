@@ -1,4 +1,4 @@
-const CACHE_NAME = "gacha-resource-planner-v13";
+const CACHE_NAME = "gacha-resource-planner-v14";
 const APP_ASSETS = [
   "./",
   "./index.html",

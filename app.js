@@ -277,6 +277,26 @@
     return form.elements.namedItem(name);
   }
 
+  function booleanFieldValue(name) {
+    const element = field(name);
+    return element.type === "checkbox"
+      ? element.checked
+      : element.value === "true";
+  }
+
+  function setBooleanField(name, value) {
+    const element = field(name);
+    if (element.type === "checkbox") {
+      element.checked = Boolean(value);
+      return;
+    }
+    element.value = String(Boolean(value));
+  }
+
+  function normalizeDateValue(value) {
+    return value ? String(value).slice(0, 10) : "";
+  }
+
   function setActiveTab(tabName) {
     const validTab = [
       "calculator",
@@ -357,7 +377,6 @@
       "rate3-label": `${rarityLabels.rarityLabel3} 排出率`,
       "rate2-label": `${rarityLabels.rarityLabel2} 排出率`,
       "target-rate5-help": `${topLabel}全体のうち、狙いのキャラ・武器が出る確率`,
-      "guarantee-after-miss-help": `${topLabel}がその他だった場合、次の${topLabel}を狙い扱いにします。`,
       "featured-guaranteed-label": `現在、次の${topLabel}は狙い確定`,
       "statistics-featured-label": topLabel,
     };
@@ -375,21 +394,21 @@
     for (const name of NUMERIC_FIELDS) {
       state[name] = field(name).value;
     }
-    state.startDate = field("startDate").value;
-    state.endDate = field("endDate").value;
+    state.startDate = normalizeDateValue(field("startDate").value);
+    state.endDate = normalizeDateValue(field("endDate").value);
     for (const name of RATE_FIELDS) {
       state[name] = field(name).value;
     }
     state.targetRate5 = field("targetRate5").value;
     state.ceilingMode = field("ceilingMode").value;
-    state.guaranteeAfterMiss = field("guaranteeAfterMiss").checked;
-    state.featuredGuaranteed = field("featuredGuaranteed").checked;
+    state.guaranteeAfterMiss = booleanFieldValue("guaranteeAfterMiss");
+    state.featuredGuaranteed = booleanFieldValue("featuredGuaranteed");
     state.rarityLabel5 = rarityLabels.rarityLabel5;
     state.rarityLabel4 = rarityLabels.rarityLabel4;
     state.rarityLabel3 = rarityLabels.rarityLabel3;
     state.rarityLabel2 = rarityLabels.rarityLabel2;
     state.bonusItems = bonusItems;
-    state.includeToday = field("includeToday").checked;
+    state.includeToday = booleanFieldValue("includeToday");
     return state;
   }
 
@@ -398,8 +417,8 @@
     for (const name of NUMERIC_FIELDS) {
       field(name).value = merged[name];
     }
-    field("startDate").value = merged.startDate;
-    field("endDate").value = merged.endDate;
+    field("startDate").value = normalizeDateValue(merged.startDate);
+    field("endDate").value = normalizeDateValue(merged.endDate);
     if (state && state.dropRate !== undefined && state.rate5 === undefined) {
       merged.rate5 = state.dropRate;
     }
@@ -408,8 +427,8 @@
     }
     field("targetRate5").value = merged.targetRate5;
     field("ceilingMode").value = merged.ceilingMode;
-    field("guaranteeAfterMiss").checked = Boolean(merged.guaranteeAfterMiss);
-    field("featuredGuaranteed").checked = Boolean(merged.featuredGuaranteed);
+    setBooleanField("guaranteeAfterMiss", merged.guaranteeAfterMiss);
+    setBooleanField("featuredGuaranteed", merged.featuredGuaranteed);
     rarityLabels = {
       rarityLabel5: merged.rarityLabel5 || DEFAULTS.rarityLabel5,
       rarityLabel4: merged.rarityLabel4 || DEFAULTS.rarityLabel4,
@@ -427,7 +446,7 @@
         }))
       : [];
     renderBonusItems();
-    field("includeToday").checked = Boolean(merged.includeToday);
+    setBooleanField("includeToday", merged.includeToday);
   }
 
   function loadState() {
@@ -952,7 +971,7 @@
         !Number.isNaN(endDate.getTime()) &&
         startDate.getTime() > endDate.getTime()
       ) {
-        setError("startDate", "終了日時より前にしてください。");
+        setError("startDate", "終了日より前にしてください。");
         valid = false;
       }
     }
@@ -1032,8 +1051,8 @@
 
   function getFeaturedPityOptions() {
     const softPityStart = integerValue("softPityStart");
-    const guaranteeAfterMiss = field("guaranteeAfterMiss").checked;
-    const featuredGuaranteed = field("featuredGuaranteed").checked;
+    const guaranteeAfterMiss = booleanFieldValue("guaranteeAfterMiss");
+    const featuredGuaranteed = booleanFieldValue("featuredGuaranteed");
     if (!softPityStart && !guaranteeAfterMiss && !featuredGuaranteed) {
       return null;
     }
@@ -1161,14 +1180,14 @@
     if (!endDate) {
       empty.hidden = false;
       content.hidden = true;
-      badge.textContent = "終了日時を入力";
+      badge.textContent = "終了日を入力";
       badge.className = "status-badge neutral";
       return;
     }
 
     const days = GachaCalculator.remainingEarningDays(
       endDate,
-      field("includeToday").checked
+      booleanFieldValue("includeToday")
     );
     const bonusTotals = bonusTotalsForForecast();
     const addedStones = integerValue("dailyStones") * days + bonusTotals.stones;

@@ -265,3 +265,10 @@ test("すり抜け後の次の★5は狙い確定になる", () => {
   assert.equal(result.star5Other, 1);
   assert.equal(result.target5, 1);
 });
+
+test("date-only end date counts through the end of that day", () => {
+  assert.equal(
+    calculator.remainingEarningDays("2026-06-12", true, "2026-06-12T12:00"),
+    1
+  );
+});
