@@ -322,6 +322,142 @@
     return results;
   }
 
+  function featuredPityProbabilityStats(draws, rates, options) {
+    const drawCount = toNonNegativeInteger(draws);
+    const baseStar5Rate = probabilityStats(
+      1,
+      rates.star5 ?? Number(rates.target5 || 0) + Number(rates.star5Other || 0)
+    ).ratePercent;
+    const targetRate = probabilityStats(1, rates.target5).ratePercent;
+    const normalFeaturedChance =
+      baseStar5Rate > 0 ? Math.min(1, targetRate / baseStar5Rate) : 0;
+    const nonStarRates = {
+      star4: probabilityStats(1, rates.star4).ratePercent,
+      star3: probabilityStats(1, rates.star3).ratePercent,
+      star2: probabilityStats(1, rates.star2).ratePercent,
+    };
+    const baseTotal =
+      baseStar5Rate +
+      nonStarRates.star4 +
+      nonStarRates.star3 +
+      nonStarRates.star2;
+    if (Math.abs(baseTotal - 100) >= 0.000001) {
+      throw new RangeError("排出率の合計は100%にしてください。");
+    }
+
+    const keys = ["target5", "star5Other", "star4", "star3", "star2"];
+    const keyBits = Object.fromEntries(keys.map((key, index) => [key, 1 << index]));
+    const expected = Object.fromEntries(keys.map((key) => [key, 0]));
+    const softPityStart = toNonNegativeInteger(options?.softPityStart);
+    const hardPity = toNonNegativeInteger(options?.hardPity);
+    const guaranteeAfterMiss = Boolean(options?.guaranteeAfterMiss);
+    const initialPity = toNonNegativeInteger(options?.currentPity);
+    const initialFeaturedGuaranteed = Boolean(options?.featuredGuaranteed);
+    let states = new Map([
+      [`${initialPity}|${initialFeaturedGuaranteed ? 1 : 0}|0`, 1],
+    ]);
+
+    function addState(map, pityCount, featuredGuaranteed, mask, probability) {
+      if (probability <= 0) {
+        return;
+      }
+      const key = `${pityCount}|${featuredGuaranteed ? 1 : 0}|${mask}`;
+      map.set(key, (map.get(key) || 0) + probability);
+    }
+
+    function addHit(map, rarity, probability, nextPity, nextGuaranteed, mask) {
+      expected[rarity] += probability;
+      addState(
+        map,
+        nextPity,
+        nextGuaranteed,
+        mask | keyBits[rarity],
+        probability
+      );
+    }
+
+    for (let drawIndex = 0; drawIndex < drawCount; drawIndex += 1) {
+      const nextStates = new Map();
+      for (const [stateKey, stateProbability] of states) {
+        const [pityPart, guaranteedPart, maskPart] = stateKey.split("|");
+        const pityCount = Number(pityPart);
+        const featuredGuaranteed = guaranteedPart === "1";
+        const mask = Number(maskPart);
+        const star5Probability =
+          star5RateForDraw(
+            baseStar5Rate,
+            pityCount,
+            softPityStart,
+            hardPity
+          ) / 100;
+        const targetProbability = featuredGuaranteed
+          ? star5Probability
+          : star5Probability * normalFeaturedChance;
+        const otherStar5Probability = featuredGuaranteed
+          ? 0
+          : star5Probability * (1 - normalFeaturedChance);
+        const nonStarProbability = Math.max(0, 1 - star5Probability);
+        const nonStarTotal = Math.max(Number.EPSILON, 100 - baseStar5Rate);
+
+        addHit(nextStates, "target5", stateProbability * targetProbability, 0, false, mask);
+        addHit(
+          nextStates,
+          "star5Other",
+          stateProbability * otherStar5Probability,
+          0,
+          guaranteeAfterMiss,
+          mask
+        );
+        addHit(
+          nextStates,
+          "star4",
+          stateProbability * nonStarProbability * (nonStarRates.star4 / nonStarTotal),
+          pityCount + 1,
+          featuredGuaranteed,
+          mask
+        );
+        addHit(
+          nextStates,
+          "star3",
+          stateProbability * nonStarProbability * (nonStarRates.star3 / nonStarTotal),
+          pityCount + 1,
+          featuredGuaranteed,
+          mask
+        );
+        addHit(
+          nextStates,
+          "star2",
+          stateProbability * nonStarProbability * (nonStarRates.star2 / nonStarTotal),
+          pityCount + 1,
+          featuredGuaranteed,
+          mask
+        );
+      }
+      states = nextStates;
+    }
+
+    const atLeastOne = Object.fromEntries(keys.map((key) => [key, 0]));
+    for (const [stateKey, probability] of states) {
+      const mask = Number(stateKey.split("|")[2]);
+      for (const key of keys) {
+        if (mask & keyBits[key]) {
+          atLeastOne[key] += probability;
+        }
+      }
+    }
+
+    return Object.fromEntries(
+      keys.map((key) => [
+        key,
+        {
+          expectedHits: expected[key],
+          atLeastOneProbability: atLeastOne[key],
+          ratePercent: 0,
+        },
+      ])
+    );
+  }
+
   function percentile(sortedValues, probability) {
     if (sortedValues.length === 0) {
       return 0;
@@ -444,6 +580,7 @@
     simulateRarities,
     star5RateForDraw,
     simulateFeaturedPityRarities,
+    featuredPityProbabilityStats,
     simulateRarityTrials,
     remainingEarningDays,
   };

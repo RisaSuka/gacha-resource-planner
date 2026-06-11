@@ -1089,16 +1089,23 @@
     );
     document.querySelector("#rate-total").textContent = rateTotal.toFixed(2);
     const simulationRates = getSimulationRates();
+    const featuredPity = getFeaturedPityOptions();
+    const pityStats = featuredPity
+      ? GachaCalculator.featuredPityProbabilityStats(
+          totalDraws,
+          simulationRates,
+          featuredPity
+        )
+      : null;
     const probabilityRows = getSimulationRarities().map((rarity) => ({
       ...rarity,
       rate: simulationRates[rarity.key],
     }));
     document.querySelector("#probability-table").innerHTML =
       probabilityRows.map((rarity) => {
-        const stats = GachaCalculator.probabilityStats(
-          totalDraws,
-          rarity.rate
-        );
+        const stats =
+          pityStats?.[rarity.key] ||
+          GachaCalculator.probabilityStats(totalDraws, rarity.rate);
         return `
           <div class="rarity-row rarity-${rarity.className.replaceAll(" ", " rarity-")}">
             <strong>${rarity.label}</strong>

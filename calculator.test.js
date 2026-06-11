@@ -272,3 +272,40 @@ test("date-only end date counts through the end of that day", () => {
     1
   );
 });
+
+test("featured guarantee probability stats include hard pity", () => {
+  const stats = calculator.featuredPityProbabilityStats(
+    90,
+    { target5: 0.3, star5Other: 0.3, star4: 5.1, star3: 94.3, star2: 0 },
+    {
+      currentPity: 0,
+      softPityStart: 0,
+      hardPity: 90,
+      guaranteeAfterMiss: true,
+      featuredGuaranteed: true,
+    }
+  );
+
+  assert.ok(stats.target5.atLeastOneProbability > 0.999999);
+  assert.ok(stats.target5.expectedHits >= 1);
+});
+
+test("non-guaranteed featured pity splits star5 expectation evenly", () => {
+  const stats = calculator.featuredPityProbabilityStats(
+    90,
+    { target5: 0.3, star5Other: 0.3, star4: 5.1, star3: 94.3, star2: 0 },
+    {
+      currentPity: 0,
+      softPityStart: 0,
+      hardPity: 90,
+      guaranteeAfterMiss: false,
+      featuredGuaranteed: false,
+    }
+  );
+
+  assert.ok(stats.target5.expectedHits > 0.5);
+  assert.ok(
+    Math.abs(stats.target5.expectedHits - stats.star5Other.expectedHits) <
+      0.000001
+  );
+});
