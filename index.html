@@ -23,8 +23,13 @@
         <h1>ガチャ資源プランナー</h1>
         <p class="lead">今とイベント終了時点で、何回引けるかをすぐ確認。</p>
       </div>
-      <div class="save-indicator" id="save-indicator" aria-live="polite">
-        この端末に自動保存
+      <div class="header-actions">
+        <button class="help-button" id="tutorial-open-button" type="button">
+          使い方
+        </button>
+        <div class="save-indicator" id="save-indicator" aria-live="polite">
+          この端末に自動保存
+        </div>
       </div>
     </header>
 
@@ -50,6 +55,47 @@
         テンプレート・移行
       </button>
     </nav>
+
+    <div class="tutorial-backdrop" id="tutorial-backdrop" hidden></div>
+    <section
+      class="tutorial-dialog"
+      id="tutorial-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="tutorial-title"
+      hidden
+    >
+      <div class="tutorial-header">
+        <div>
+          <p class="step-label">FIRST STEP</p>
+          <h2 id="tutorial-title">はじめに</h2>
+        </div>
+        <button class="tutorial-close-button" id="tutorial-close-button" type="button" aria-label="閉じる">
+          ×
+        </button>
+      </div>
+      <ol class="tutorial-steps">
+        <li>
+          <strong>ゲームを選ぶ</strong>
+          <span>テンプレートを適用すると、排出率や天井設定が入ります。</span>
+        </li>
+        <li>
+          <strong>資源を入れる</strong>
+          <span>所持している石とチケットを入力すると、今引ける回数が分かります。</span>
+        </li>
+        <li>
+          <strong>予定を見る</strong>
+          <span>終了日や毎日の入手量を入れると、イベント終了時点の見込みを確認できます。</span>
+        </li>
+        <li>
+          <strong>テストする</strong>
+          <span>ガチャテストでは、目標達成時点で止めて残った資源も表示します。</span>
+        </li>
+      </ol>
+      <div class="tutorial-actions">
+        <button id="tutorial-start-button" type="button">はじめる</button>
+      </div>
+    </section>
 
     <main class="layout">
       <section class="panel input-panel" aria-labelledby="input-heading">

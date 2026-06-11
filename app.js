@@ -6,6 +6,7 @@
   const BACKUP_FORMAT = "gacha-resource-planner-backup";
   const BACKUP_VERSION = 1;
   const ACTIVE_TAB_KEY = "gacha-resource-planner:active-tab";
+  const TUTORIAL_SEEN_KEY = "gacha-resource-planner:tutorial-seen";
   const DEFAULTS = {
     stones: "0",
     tickets: "0",
@@ -274,6 +275,11 @@
   const copyShareButton = document.querySelector("#copy-share-button");
   const importShareButton = document.querySelector("#import-share-button");
   const dataMessage = document.querySelector("#data-message");
+  const tutorialOpenButton = document.querySelector("#tutorial-open-button");
+  const tutorialBackdrop = document.querySelector("#tutorial-backdrop");
+  const tutorialDialog = document.querySelector("#tutorial-dialog");
+  const tutorialCloseButton = document.querySelector("#tutorial-close-button");
+  const tutorialStartButton = document.querySelector("#tutorial-start-button");
   const appTabs = document.querySelectorAll(".app-tab");
   const LOCKED_TABS_WITHOUT_PRESET = ["simulation", "settings", "schedule"];
   const bonusDateInput = document.querySelector("#bonus-date");
@@ -322,6 +328,30 @@
       return;
     }
     element.value = String(Boolean(value));
+  }
+
+  function setTutorialOpen(open) {
+    tutorialBackdrop.hidden = !open;
+    tutorialDialog.hidden = !open;
+    document.body.classList.toggle("has-open-tutorial", open);
+    if (open) {
+      tutorialStartButton.focus();
+    } else {
+      tutorialOpenButton.focus();
+    }
+  }
+
+  function closeTutorial(markSeen) {
+    if (markSeen) {
+      localStorage.setItem(TUTORIAL_SEEN_KEY, "true");
+    }
+    setTutorialOpen(false);
+  }
+
+  function maybeShowTutorial() {
+    if (localStorage.getItem(TUTORIAL_SEEN_KEY) !== "true") {
+      setTutorialOpen(true);
+    }
   }
 
   function normalizeDateValue(value) {
@@ -1575,6 +1605,15 @@
   backupFileInput.addEventListener("change", importBackupFile);
   copyShareButton.addEventListener("click", copyShareCode);
   importShareButton.addEventListener("click", importShareCode);
+  tutorialOpenButton.addEventListener("click", () => setTutorialOpen(true));
+  tutorialBackdrop.addEventListener("click", () => closeTutorial(false));
+  tutorialCloseButton.addEventListener("click", () => closeTutorial(false));
+  tutorialStartButton.addEventListener("click", () => closeTutorial(true));
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !tutorialDialog.hidden) {
+      closeTutorial(false);
+    }
+  });
   addBonusButton.addEventListener("click", addBonusItem);
   bonusList.addEventListener("click", (event) => {
     const deleteButton = event.target.closest("[data-delete-bonus]");
@@ -1604,6 +1643,7 @@
   setActiveTab(localStorage.getItem(ACTIVE_TAB_KEY) || "calculator");
   updateModeVisibility();
   render();
+  maybeShowTutorial();
 
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {

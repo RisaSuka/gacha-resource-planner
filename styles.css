@@ -29,6 +29,10 @@ body {
   font-family: "Segoe UI", "Yu Gothic UI", "Hiragino Kaku Gothic ProN", sans-serif;
 }
 
+body.has-open-tutorial {
+  overflow: hidden;
+}
+
 button,
 input,
 select {
@@ -43,6 +47,29 @@ select {
   align-items: flex-end;
   justify-content: space-between;
   gap: 24px;
+}
+
+.header-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.help-button {
+  min-height: 40px;
+  padding: 8px 13px;
+  border: 1px solid #bad9ce;
+  border-radius: 12px;
+  color: var(--green-dark);
+  background: rgba(255, 255, 255, 0.78);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.help-button:hover {
+  border-color: var(--green);
+  background: #fff;
 }
 
 .app-tabs {
@@ -128,7 +155,6 @@ h2 {
 }
 
 .save-indicator {
-  flex: 0 0 auto;
   padding: 9px 14px;
   border: 1px solid #bad9ce;
   border-radius: 999px;
@@ -136,6 +162,133 @@ h2 {
   background: rgba(255, 255, 255, 0.72);
   font-size: 0.82rem;
   font-weight: 700;
+}
+
+.tutorial-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(20, 32, 29, 0.45);
+}
+
+.tutorial-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 90;
+  width: min(560px, calc(100% - 32px));
+  max-height: calc(100vh - 32px);
+  padding: 24px;
+  border: 1px solid #bad9ce;
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: 0 24px 80px rgba(20, 32, 29, 0.22);
+  transform: translate(-50%, -50%);
+  overflow: auto;
+}
+
+.tutorial-header,
+.tutorial-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.tutorial-header {
+  justify-content: space-between;
+}
+
+.tutorial-actions {
+  justify-content: flex-end;
+}
+
+.tutorial-header h2 {
+  font-size: 1.45rem;
+}
+
+.tutorial-close-button {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--muted);
+  background: var(--surface);
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.tutorial-close-button:hover {
+  border-color: #9ba9a3;
+  color: var(--ink);
+}
+
+.tutorial-steps {
+  display: grid;
+  margin: 20px 0 22px;
+  padding: 0;
+  gap: 10px;
+  list-style: none;
+  counter-reset: tutorial-step;
+}
+
+.tutorial-steps li {
+  position: relative;
+  min-height: 74px;
+  padding: 14px 14px 14px 58px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #f8faf8;
+  counter-increment: tutorial-step;
+}
+
+.tutorial-steps li::before {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--green);
+  font-size: 0.86rem;
+  font-weight: 900;
+  content: counter(tutorial-step);
+}
+
+.tutorial-steps strong,
+.tutorial-steps span {
+  display: block;
+}
+
+.tutorial-steps strong {
+  margin-bottom: 3px;
+  font-size: 0.98rem;
+}
+
+.tutorial-steps span {
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.tutorial-actions button {
+  min-height: 42px;
+  padding: 9px 18px;
+  border: 0;
+  border-radius: 12px;
+  color: #fff;
+  background: var(--green);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.tutorial-actions button:hover {
+  background: var(--green-dark);
 }
 
 .layout {
@@ -1307,6 +1460,11 @@ body[data-active-tab="simulation"] .simulation-panel {
     flex-direction: column;
   }
 
+  .header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
   .layout {
     grid-template-columns: 1fr;
   }
@@ -1319,6 +1477,32 @@ body[data-active-tab="simulation"] .simulation-panel {
 
   .page-header {
     padding: 28px 16px 22px;
+  }
+
+  .header-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .help-button,
+  .save-indicator {
+    width: 100%;
+    text-align: center;
+  }
+
+  .tutorial-dialog {
+    width: calc(100% - 20px);
+    padding: 18px;
+    border-radius: 16px;
+  }
+
+  .tutorial-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .tutorial-actions button {
+    width: 100%;
   }
 
   .layout {
