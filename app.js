@@ -28,6 +28,10 @@
     ceilingMode: "pity",
     guaranteeAfterMiss: false,
     featuredGuaranteed: false,
+    rarityLabel5: "★5",
+    rarityLabel4: "★4",
+    rarityLabel3: "★3",
+    rarityLabel2: "★2",
     includeToday: false,
   };
   const NUMERIC_FIELDS = [
@@ -65,36 +69,63 @@
     "ceilingMode",
     "guaranteeAfterMiss",
     "featuredGuaranteed",
+    "rarityLabel5",
+    "rarityLabel4",
+    "rarityLabel3",
+    "rarityLabel2",
     "includeToday",
   ];
   const RARITIES = [
-    { key: "star5", field: "rate5", label: "★5" },
-    { key: "star4", field: "rate4", label: "★4" },
-    { key: "star3", field: "rate3", label: "★3" },
-    { key: "star2", field: "rate2", label: "★2" },
+    { key: "star5", field: "rate5", labelKey: "rarityLabel5" },
+    { key: "star4", field: "rate4", labelKey: "rarityLabel4" },
+    { key: "star3", field: "rate3", labelKey: "rarityLabel3" },
+    { key: "star2", field: "rate2", labelKey: "rarityLabel2" },
   ];
   const PRESET_TEMPLATES = {
-    "トリッカル キャラ（目安）": {
+    "トリッカル 通常キャラPU": {
       singleCost: "100",
       tenCost: "1000",
-      ceiling: "200",
+      exchangeCost: "200",
       rate5: "3",
-      targetRate5: "1.5",
-      rate4: "17",
-      rate3: "40",
-      rate2: "40",
-      ceilingMode: "pity",
+      targetRate5: "0.8",
+      rate4: "21",
+      rate3: "76",
+      rate2: "0",
+      ceilingMode: "points",
+      rarityLabel5: "★3",
+      rarityLabel4: "★2",
+      rarityLabel3: "★1",
+      rarityLabel2: "その他",
     },
-    "トリッカル 遺物カード（目安）": {
+    "トリッカル エルダインPU": {
       singleCost: "100",
       tenCost: "1000",
-      ceiling: "200",
+      exchangeCost: "300",
       rate5: "3",
-      targetRate5: "1.5",
-      rate4: "17",
-      rate3: "40",
-      rate2: "40",
-      ceilingMode: "pity",
+      targetRate5: "0.6",
+      rate4: "21",
+      rate3: "76",
+      rate2: "0",
+      ceilingMode: "points",
+      rarityLabel5: "★3",
+      rarityLabel4: "★2",
+      rarityLabel3: "★1",
+      rarityLabel2: "その他",
+    },
+    "トリッカル カードガチャ": {
+      singleCost: "100",
+      tenCost: "1000",
+      exchangeCost: "150",
+      rate5: "3",
+      targetRate5: "0.8",
+      rate4: "21",
+      rate3: "76",
+      rate2: "0",
+      ceilingMode: "points",
+      rarityLabel5: "★3",
+      rarityLabel4: "★2",
+      rarityLabel3: "★1",
+      rarityLabel2: "その他",
     },
     "崩壊：スターレイル キャラクター": {
       singleCost: "160",
@@ -224,6 +255,12 @@
   let saveIndicatorTimer;
   let templateMessageTimer;
   let dataMessageTimer;
+  let rarityLabels = {
+    rarityLabel5: DEFAULTS.rarityLabel5,
+    rarityLabel4: DEFAULTS.rarityLabel4,
+    rarityLabel3: DEFAULTS.rarityLabel3,
+    rarityLabel2: DEFAULTS.rarityLabel2,
+  };
 
   function field(name) {
     return form.elements.namedItem(name);
@@ -269,6 +306,34 @@
     document.querySelector(`#${id}`).textContent = numberFormat.format(value);
   }
 
+  function getRarityDefinitions() {
+    return RARITIES.map((rarity) => ({
+      ...rarity,
+      label: rarityLabels[rarity.labelKey] || DEFAULTS[rarity.labelKey],
+    }));
+  }
+
+  function updateRarityLabelText() {
+    const topLabel = rarityLabels.rarityLabel5 || DEFAULTS.rarityLabel5;
+    const labelMap = {
+      "rate5-label": `${topLabel} 排出率`,
+      "target-rate5-label": `狙いの${topLabel} 排出率`,
+      "rate4-label": `${rarityLabels.rarityLabel4} 排出率`,
+      "rate3-label": `${rarityLabels.rarityLabel3} 排出率`,
+      "rate2-label": `${rarityLabels.rarityLabel2} 排出率`,
+      "target-rate5-help": `${topLabel}全体のうち、狙いのキャラ・武器が出る確率`,
+      "guarantee-after-miss-help": `${topLabel}がその他だった場合、次の${topLabel}を狙い扱いにします。`,
+      "statistics-featured-label": topLabel,
+    };
+
+    for (const [id, text] of Object.entries(labelMap)) {
+      const element = document.querySelector(`#${id}`);
+      if (element) {
+        element.textContent = text;
+      }
+    }
+  }
+
   function readState() {
     const state = {};
     for (const name of NUMERIC_FIELDS) {
@@ -282,6 +347,10 @@
     state.ceilingMode = field("ceilingMode").value;
     state.guaranteeAfterMiss = field("guaranteeAfterMiss").checked;
     state.featuredGuaranteed = field("featuredGuaranteed").checked;
+    state.rarityLabel5 = rarityLabels.rarityLabel5;
+    state.rarityLabel4 = rarityLabels.rarityLabel4;
+    state.rarityLabel3 = rarityLabels.rarityLabel3;
+    state.rarityLabel2 = rarityLabels.rarityLabel2;
     state.includeToday = field("includeToday").checked;
     return state;
   }
@@ -302,6 +371,13 @@
     field("ceilingMode").value = merged.ceilingMode;
     field("guaranteeAfterMiss").checked = Boolean(merged.guaranteeAfterMiss);
     field("featuredGuaranteed").checked = Boolean(merged.featuredGuaranteed);
+    rarityLabels = {
+      rarityLabel5: merged.rarityLabel5 || DEFAULTS.rarityLabel5,
+      rarityLabel4: merged.rarityLabel4 || DEFAULTS.rarityLabel4,
+      rarityLabel3: merged.rarityLabel3 || DEFAULTS.rarityLabel3,
+      rarityLabel2: merged.rarityLabel2 || DEFAULTS.rarityLabel2,
+    };
+    updateRarityLabelText();
     field("includeToday").checked = Boolean(merged.includeToday);
   }
 
@@ -530,6 +606,11 @@
       softPityStart: "0",
       guaranteeAfterMiss: false,
       featuredGuaranteed: false,
+      rarityLabel5: DEFAULTS.rarityLabel5,
+      rarityLabel4: DEFAULTS.rarityLabel4,
+      rarityLabel3: DEFAULTS.rarityLabel3,
+      rarityLabel2: DEFAULTS.rarityLabel2,
+      exchangeCost: DEFAULTS.exchangeCost,
       ...preset,
       currentPity: "0",
       currentPoints: "0",
@@ -663,7 +744,8 @@
       Number.isFinite(rate5) &&
       targetRate5 > rate5
     ) {
-      targetRateError = "狙いの★5排出率は、★5全体以下にしてください。";
+      const topLabel = rarityLabels.rarityLabel5 || DEFAULTS.rarityLabel5;
+      targetRateError = `狙いの${topLabel}排出率は、${topLabel}全体以下にしてください。`;
     }
     setError("targetRate5", targetRateError);
     valid = valid && !targetRateError;
@@ -754,7 +836,7 @@
 
   function getRarityRates() {
     return Object.fromEntries(
-      RARITIES.map((rarity) => [
+      getRarityDefinitions().map((rarity) => [
         rarity.key,
         Number(field(rarity.field).value) || 0,
       ])
@@ -790,13 +872,19 @@
   }
 
   function getSimulationRarities() {
+    const rates = getSimulationRates();
+    const topLabel = rarityLabels.rarityLabel5 || DEFAULTS.rarityLabel5;
     return [
-      { key: "target5", label: "狙いの★5", className: "star5 target" },
-      { key: "star5Other", label: "その他★5", className: "star5" },
-      { key: "star4", label: "★4", className: "star4" },
-      { key: "star3", label: "★3", className: "star3" },
-      { key: "star2", label: "★2", className: "star2" },
-    ];
+      {
+        key: "target5",
+        label: `狙いの${topLabel}`,
+        className: "star5 target",
+      },
+      { key: "star5Other", label: `その他${topLabel}`, className: "star5" },
+      { key: "star4", label: rarityLabels.rarityLabel4, className: "star4" },
+      { key: "star3", label: rarityLabels.rarityLabel3, className: "star3" },
+      { key: "star2", label: rarityLabels.rarityLabel2, className: "star2" },
+    ].filter((rarity) => rates[rarity.key] > 0);
   }
 
   function renderProbabilityStats(totalDraws) {
@@ -806,24 +894,11 @@
       0
     );
     document.querySelector("#rate-total").textContent = rateTotal.toFixed(2);
-    const targetRate = Number(field("targetRate5").value) || 0;
-    const probabilityRows = [
-      {
-        label: "狙いの★5",
-        rate: targetRate,
-        className: "star5 target",
-      },
-      {
-        label: "その他★5",
-        rate: Math.max(0, rates.star5 - targetRate),
-        className: "star5",
-      },
-      ...RARITIES.slice(1).map((rarity) => ({
-        label: rarity.label,
-        rate: rates[rarity.key],
-        className: rarity.key,
-      })),
-    ];
+    const simulationRates = getSimulationRates();
+    const probabilityRows = getSimulationRarities().map((rarity) => ({
+      ...rarity,
+      rate: simulationRates[rarity.key],
+    }));
     document.querySelector("#probability-table").innerHTML =
       probabilityRows.map((rarity) => {
         const stats = GachaCalculator.probabilityStats(
