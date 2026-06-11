@@ -1172,6 +1172,104 @@
     ].filter((rarity) => rates[rarity.key] > 0);
   }
 
+  function createEmptyRarityResults() {
+    return Object.fromEntries(
+      Object.keys(getSimulationRates()).map((key) => [key, 0])
+    );
+  }
+
+  function getSingleDrawResult(rates, featuredPity) {
+    const result = featuredPity
+      ? GachaCalculator.simulateFeaturedPityRarities(1, rates, featuredPity)
+      : GachaCalculator.simulateRarities(1, rates);
+    return Object.keys(result).find((key) => result[key] > 0 && key !== "other");
+  }
+
+  function updateFeaturedPityAfterDraw(featuredPity, rarityKey) {
+    if (!featuredPity) {
+      return;
+    }
+    if (rarityKey === "target5") {
+      featuredPity.currentPity = 0;
+      featuredPity.featuredGuaranteed = false;
+      return;
+    }
+    if (rarityKey === "star5Other") {
+      featuredPity.currentPity = 0;
+      featuredPity.featuredGuaranteed = Boolean(featuredPity.guaranteeAfterMiss);
+      return;
+    }
+    featuredPity.currentPity += 1;
+  }
+
+  function runTargetedSimulation() {
+    const stones = integerValue("stones");
+    const tickets = integerValue("tickets");
+    const drawsPerTicket = Math.max(1, integerValue("drawsPerTicket"));
+    const singleCost = integerValue("singleCost");
+    const tenCost = integerValue("tenCost");
+    const stonePlan = GachaCalculator.optimalStonePlan(
+      stones,
+      singleCost,
+      tenCost
+    );
+    const drawsFromTickets = GachaCalculator.ticketDraws(
+      tickets,
+      drawsPerTicket
+    );
+    const totalDraws = stonePlan.draws + drawsFromTickets;
+    const rates = getSimulationRates();
+    const featuredPityOptions = getFeaturedPityOptions();
+    const featuredPity = featuredPityOptions ? { ...featuredPityOptions } : null;
+    const rarityResults = createEmptyRarityResults();
+    const pointMode = field("ceilingMode").value === "points";
+    const targetCopies = integerValue("targetCopies");
+    const exchangeCost = Math.max(1, integerValue("exchangeCost"));
+    const currentPoints = integerValue("currentPoints");
+    let targetHits = 0;
+    let targetTotal = 0;
+    let drawsUsed = 0;
+
+    for (let drawIndex = 0; drawIndex < totalDraws; drawIndex += 1) {
+      const rarityKey = getSingleDrawResult(rates, featuredPity);
+      if (rarityKey) {
+        rarityResults[rarityKey] = (rarityResults[rarityKey] || 0) + 1;
+      }
+      updateFeaturedPityAfterDraw(featuredPity, rarityKey);
+      drawsUsed += 1;
+      targetHits = rarityResults.target5 || rarityResults.star5 || 0;
+      targetTotal = targetHits;
+
+      if (pointMode) {
+        targetTotal += Math.floor((currentPoints + drawsUsed) / exchangeCost);
+      }
+      if (targetTotal >= targetCopies) {
+        break;
+      }
+    }
+
+    const ticketDrawsUsed = Math.min(drawsUsed, drawsFromTickets);
+    const usedTickets = Math.ceil(ticketDrawsUsed / drawsPerTicket);
+    const stoneDrawsUsed = Math.max(0, drawsUsed - drawsFromTickets);
+    const spentStones = GachaCalculator.minStonesForDraws(
+      stoneDrawsUsed,
+      singleCost,
+      tenCost
+    );
+
+    return {
+      draws: drawsUsed,
+      rarityResults,
+      spentStones,
+      usedTickets,
+      remainingStones: Math.max(0, stones - spentStones),
+      remainingTickets: Math.max(0, tickets - usedTickets),
+      pointsAfterSimulation: currentPoints + drawsUsed,
+      targetTotal,
+      targetShortage: Math.max(0, targetCopies - targetTotal),
+    };
+  }
+
   function renderProbabilityStats(totalDraws) {
     const rates = getRarityRates();
     const rateTotal = Object.values(rates).reduce(
@@ -1346,33 +1444,13 @@
       return;
     }
 
-    const stones = integerValue("stones");
-    const tickets = integerValue("tickets");
-    const drawsPerTicket = integerValue("drawsPerTicket");
-    const stonePlan = GachaCalculator.optimalStonePlan(
-      stones,
-      integerValue("singleCost"),
-      integerValue("tenCost")
-    );
-    const drawsFromTickets = GachaCalculator.ticketDraws(
-      tickets,
-      drawsPerTicket
-    );
-    const totalDraws = stonePlan.draws + drawsFromTickets;
+    const result = runTargetedSimulation();
     const simulationRarities = getSimulationRarities();
-    const featuredPity = getFeaturedPityOptions();
-    const rarityResults = featuredPity
-      ? GachaCalculator.simulateFeaturedPityRarities(
-          totalDraws,
-          getSimulationRates(),
-          featuredPity
-        )
-      : GachaCalculator.simulateRarities(totalDraws, getSimulationRates());
     const rarityTotal = simulationRarities.reduce(
-      (sum, rarity) => sum + rarityResults[rarity.key],
+      (sum, rarity) => sum + result.rarityResults[rarity.key],
       0
     );
-    if (rarityTotal !== totalDraws) {
+    if (rarityTotal !== result.draws) {
       throw new Error("抽選結果の合計がガチャ回数と一致しません。");
     }
 
@@ -1381,33 +1459,25 @@
         (rarity) => `
           <div class="simulation-rarity rarity-${rarity.className.replaceAll(" ", " rarity-")}">
             <span>${rarity.label}</span>
-            <strong>${numberFormat.format(rarityResults[rarity.key])}体</strong>
+            <strong>${numberFormat.format(result.rarityResults[rarity.key])}体</strong>
           </div>
         `
       ).join("");
-    setText("simulation-draws", totalDraws);
-    setText("simulation-spent-stones", stonePlan.spentStones);
-    setText("simulation-used-tickets", tickets);
-    setText("simulation-remaining-stones", stonePlan.remainingStones);
+    setText("simulation-draws", result.draws);
+    setText("simulation-spent-stones", result.spentStones);
+    setText("simulation-used-tickets", result.usedTickets);
+    setText("simulation-remaining-stones", result.remainingStones);
+    setText("simulation-remaining-tickets", result.remainingTickets);
 
     const pointMode = field("ceilingMode").value === "points";
-    const targetCopies = integerValue("targetCopies");
-    const targetHits = rarityResults.target5 || rarityResults.star5 || 0;
-    let targetTotal = targetHits;
     document.querySelector("#simulation-points-row").hidden = !pointMode;
     if (pointMode) {
-      const pointsAfterSimulation = integerValue("currentPoints") + totalDraws;
-      const exchangeableAfterSimulation = Math.floor(
-        pointsAfterSimulation / Math.max(1, integerValue("exchangeCost"))
-      );
-      targetTotal += exchangeableAfterSimulation;
-      setText("simulation-points", pointsAfterSimulation);
+      setText("simulation-points", result.pointsAfterSimulation);
     }
-    const targetShortage = Math.max(0, targetCopies - targetTotal);
     document.querySelector("#simulation-target-status").textContent =
-      targetShortage === 0
-        ? `達成（${numberFormat.format(targetTotal)}体）`
-        : `不足 ${numberFormat.format(targetShortage)}体 / 結果 ${numberFormat.format(targetTotal)}体`;
+      result.targetShortage === 0
+        ? `達成（${numberFormat.format(result.targetTotal)}体）`
+        : `不足 ${numberFormat.format(result.targetShortage)}体 / 結果 ${numberFormat.format(result.targetTotal)}体`;
 
     document.querySelector("#simulation-empty").hidden = true;
     document.querySelector("#simulation-content").hidden = false;
