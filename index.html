@@ -157,7 +157,13 @@
                 </span>
                 <span class="error" data-error-for="tickets"></span>
               </label>
-              <label class="field">
+            </div>
+          </fieldset>
+
+          <fieldset class="gacha-fieldset">
+            <legend>現在のガチャ状況</legend>
+            <div class="field-grid">
+              <label class="field advanced-setting-field">
                 <span>チケット1枚で引ける回数</span>
                 <span class="input-wrap">
                   <input id="drawsPerTicket" name="drawsPerTicket" type="number" min="0" step="1" value="1" inputmode="numeric">
@@ -165,12 +171,6 @@
                 </span>
                 <span class="error" data-error-for="drawsPerTicket"></span>
               </label>
-            </div>
-          </fieldset>
-
-          <fieldset class="gacha-fieldset">
-            <legend>現在のガチャ状況</legend>
-            <div class="field-grid">
               <label class="field field-wide advanced-setting-field">
                 <span>天井・交換方式</span>
                 <select id="ceilingMode" name="ceilingMode">
