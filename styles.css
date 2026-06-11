@@ -198,10 +198,11 @@ h2 {
 }
 
 .preset-fieldset {
-  padding: 16px;
+  padding: 16px 18px;
   border-color: #bad9ce;
   border-radius: 16px;
   background: var(--green-soft);
+  overflow: hidden;
 }
 
 .data-manager {
@@ -276,7 +277,7 @@ h2 {
 }
 
 .preset-template-row {
-  grid-template-columns: minmax(0, 1fr) minmax(86px, auto);
+  grid-template-columns: minmax(0, 1fr) 86px;
   margin-bottom: 8px;
   align-items: end;
 }
@@ -529,9 +530,11 @@ legend {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  line-height: 1.3;
 }
 
 .fieldset-toggle {
+  flex: 0 0 72px;
   min-width: 62px;
   padding: 6px 10px;
   border: 1px solid #bad9ce;
@@ -540,6 +543,7 @@ legend {
   background: #fff;
   font-size: 0.72rem;
   font-weight: 700;
+  text-align: center;
   cursor: pointer;
 }
 
@@ -561,9 +565,13 @@ legend {
 }
 
 .collapsible-fieldset.is-collapsed legend {
+  width: calc(100% + 28px);
   color: var(--muted);
+  margin-inline: -14px;
   margin-bottom: 0;
   border-bottom: 0;
+  padding-left: 14px;
+  padding-right: 0;
   padding-bottom: 0;
 }
 
@@ -1110,23 +1118,41 @@ input[aria-invalid="true"] {
 }
 
 .forecast-resources > div {
+  display: grid;
+  grid-template-columns: minmax(82px, 1fr) auto;
+  gap: 4px 10px;
   padding: 16px;
   border: 1px solid var(--line);
   border-radius: 14px;
   background: #fafbf9;
+  align-items: baseline;
 }
 
 .forecast-resources span,
 .forecast-resources small {
-  display: block;
   color: var(--muted);
   font-size: 0.78rem;
 }
 
 .forecast-resources strong {
-  display: block;
-  margin: 5px 0;
+  margin: 0;
   font-size: 1.1rem;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.forecast-resources small {
+  grid-column: 1;
+}
+
+.forecast-resources small + small,
+.forecast-resources strong + small {
+  grid-column: 2;
+  text-align: right;
+}
+
+.forecast-resources small span {
+  color: inherit;
 }
 
 .calculation-note {
