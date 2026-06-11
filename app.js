@@ -5,6 +5,7 @@
   const TEMPLATE_STORAGE_KEY = "gacha-resource-planner:templates:v1";
   const BACKUP_FORMAT = "gacha-resource-planner-backup";
   const BACKUP_VERSION = 1;
+  const ACTIVE_TAB_KEY = "gacha-resource-planner:active-tab";
   const DEFAULTS = {
     stones: "0",
     tickets: "0",
@@ -86,6 +87,7 @@
   const copyShareButton = document.querySelector("#copy-share-button");
   const importShareButton = document.querySelector("#import-share-button");
   const dataMessage = document.querySelector("#data-message");
+  const appTabs = document.querySelectorAll(".app-tab");
   const numberFormat = new Intl.NumberFormat("ja-JP");
   let saveIndicatorTimer;
   let templateMessageTimer;
@@ -93,6 +95,42 @@
 
   function field(name) {
     return form.elements.namedItem(name);
+  }
+
+  function setActiveTab(tabName) {
+    const validTab = ["calculator", "simulation", "data"].includes(tabName)
+      ? tabName
+      : "calculator";
+    document.body.dataset.activeTab = validTab;
+    localStorage.setItem(ACTIVE_TAB_KEY, validTab);
+
+    for (const tab of appTabs) {
+      const active = tab.dataset.tab === validTab;
+      tab.classList.toggle("is-active", active);
+      tab.setAttribute("aria-selected", String(active));
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function setupCollapsibleFields() {
+    for (const fieldset of form.querySelectorAll("fieldset")) {
+      const legend = fieldset.querySelector(":scope > legend");
+      if (!legend) {
+        continue;
+      }
+      fieldset.classList.add("collapsible-fieldset");
+      const toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "fieldset-toggle";
+      toggle.textContent = "閉じる";
+      toggle.setAttribute("aria-expanded", "true");
+      toggle.addEventListener("click", () => {
+        const collapsed = fieldset.classList.toggle("is-collapsed");
+        toggle.textContent = collapsed ? "開く" : "閉じる";
+        toggle.setAttribute("aria-expanded", String(!collapsed));
+      });
+      legend.append(toggle);
+    }
   }
 
   function setText(id, value) {
@@ -787,6 +825,9 @@
 
   form.addEventListener("input", handleInput);
   form.addEventListener("change", handleInput);
+  for (const tab of appTabs) {
+    tab.addEventListener("click", () => setActiveTab(tab.dataset.tab));
+  }
   saveTemplateButton.addEventListener("click", saveCurrentTemplate);
   loadTemplateButton.addEventListener("click", loadSelectedTemplate);
   deleteTemplateButton.addEventListener("click", deleteSelectedTemplate);
@@ -811,6 +852,8 @@
 
   loadState();
   renderTemplateOptions();
+  setupCollapsibleFields();
+  setActiveTab(localStorage.getItem(ACTIVE_TAB_KEY) || "calculator");
   updateModeVisibility();
   render();
 
